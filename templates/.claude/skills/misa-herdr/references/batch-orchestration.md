@@ -11,8 +11,11 @@ dependency, expected evidence, verification, terminal disposition (`keep` or
 `operations cleanup needed`), business role, OMP model role, provider, effective
 model, and reasoning tier.
 The objective, ownership, verification, and escalation boundary must be clear before
-launch; implementation hypotheses may remain open for the worker to test. Misa's
-controller model is never a substitute for the worker's selected model.
+launch; implementation hypotheses may remain open for the worker to test. For work
+with architecture, lifecycle, shared-contract, or vertical dependencies, record the
+user goal, non-negotiable constraints with their source, current revisable approach,
+and known unknowns separately. Misa's controller model is never a substitute for the
+worker's selected model.
 
 Group work into waves:
 
@@ -58,8 +61,9 @@ or remove worktrees; a separate authorised Git workflow owns that lifecycle.
    through `monitoring-and-reporting.md`; resolve a completed worker before a
    dependent worker starts.
 5. Do not start dependent work until the prerequisite output has been absorbed and
-   verified. If a worker changes a shared contract unexpectedly, stop its dependent
-   wave and replan rather than patching around the conflict.
+   verified. If a worker raises a supported `DESIGN_CHANGE_REQUEST` that changes a
+   shared contract or architecture, stop only its affected dependent wave, record the
+   disposition, and replan rather than patching around the conflict.
 
 ## Worker prompt contract
 
@@ -70,6 +74,13 @@ Scope: modify only <owned paths>; do not change priorities, release state, secre
 or unrelated files. Stop and report a blocker if the objective needs work outside
 this boundary.
 
+For a design-sensitive task, distinguish the user goal and non-negotiable constraints
+from the current approach. The current approach is revisable unless explicitly named
+as a constraint. If evidence challenges it and resolution needs another owner's scope
+or a decision, report DESIGN_CHANGE_REQUEST with premise, evidence, impact, bounded
+options, and requested disposition; do not apply an unowned change or bury it in a
+workaround.
+
 Memory: query MemPalace only when Misa supplies a project wing and prior decisions,
 handoffs, or architecture materially matter. Treat results as leads; verify them
 against source, Git, ticket, or portfolio evidence. Do not store transcripts, secrets,
@@ -78,6 +89,7 @@ customer data, or build/test output.
 At completion reply with no transcript and at most 12 bullets:
 OUTCOME: <result>
 ASSUMPTIONS: <tested/rejected/open assumptions and any escalation trigger>
+DESIGN_CHANGE_REQUEST: <none, or premise/evidence/impact/options/requested disposition>
 EVIDENCE: <changed paths, commands, source links>
 VERIFICATION: <command/result, or not run and why>
 DECISION/BLOCKER: <none or one item>

@@ -9,6 +9,29 @@ Planning is continuous reasoning, not a mandatory document phase. Choose the del
 lane from authority, reversibility, and evidence needs; do not classify by a vague
 notion of task size.
 
+## Blind-spot intake
+
+Before selecting a lane for every request, Misa performs a bounded intake check from
+the user brief alone. Separate:
+
+- **Outcome:** the result the user wants.
+- **Non-negotiable constraints:** user-accepted or contract-mandated limits.
+- **Current approaches:** designs, mechanisms, or task framing that remain revisable
+  unless explicitly constrained.
+- **Unknowns:** facts or decisions not established by the brief.
+
+Check whether an unknown, ambiguity, or conflict could change the outcome, authority,
+dependency, acceptance criteria, or tool feasibility. Do not launch an agent merely to
+challenge the prompt. Launch the smallest read-only discovery worker only if resolving
+that unknown requires repository, system, or external evidence and could change one of
+those routing decisions. Ask the user only if the missing answer is user-owned. An
+ordinary implementation choice belongs to the assigned worker; an unknown that does
+not change routing is not an intake gate.
+
+Report an intake finding only when it changes the selected lane, requires a user
+decision, or prevents execution. Do not turn the check into a generic critique or a
+mandatory planning phase.
+
 ## Select a lane
 
 | Lane | Use when | Misa action |

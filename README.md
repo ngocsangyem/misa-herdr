@@ -19,6 +19,58 @@ prompting, and starting registered Herdr agents, plus splitting a worker pane. I
 does not execute arbitrary shell commands, read files, write files, or create
 worktrees. Git owns branches and worktrees; Herdr owns panes and agent lifecycle.
 
+## What coordination problems it addresses
+
+This kit separates coordination from implementation. Misa keeps the user’s outcome,
+authority boundaries, ownership, dependencies, and acceptance conditions in view.
+Workers inspect source, test hypotheses, make scoped changes, and return compact
+evidence-backed handoffs.
+
+The policy is designed for a few recurring failures in multi-agent work:
+
+- A task brief turns a current design into an unchallenged requirement.
+- A worker finds evidence against that design but can only return a local workaround.
+- Several workers change or depend on the same area without a clear owner.
+- A decision made in a transient message never reaches the worker whose next step
+  depends on it.
+
+Misa performs a short blind-spot intake before routing a request. It separates the
+outcome, non-negotiable constraints, revisable approaches, and unknowns. It does not
+spawn a critic for every prompt. A read-only scout is used only when an unknown needs
+evidence and could change the route; a user question is reserved for a user-owned
+decision.
+
+When a worker has evidence that a current approach no longer serves the outcome, it
+can send a `DESIGN_CHANGE_REQUEST`. The request names the premise, evidence, impact,
+options, and requested disposition. Misa either keeps the approach with a reason,
+permits a local adaptation, routes the work to the owner, or asks the user. The worker
+does not edit another owner’s scope. If the decision changes future work, it is written
+to the task’s report, plan, or work snapshot before affected work continues.
+
+```mermaid
+flowchart TD
+    A[User request] --> B[Misa blind-spot intake]
+    B --> C{Unknown changes routing?}
+    C -->|No| D[Route bounded worker]
+    C -->|Needs evidence| E[Read-only discovery]
+    E --> B
+    C -->|Needs user decision| F[Ask user]
+    F --> B
+    D --> G{Evidence challenges current approach?}
+    G -->|No| H[Verify and hand off]
+    G -->|Yes| I[DESIGN_CHANGE_REQUEST]
+    I --> J[Misa records disposition]
+    J --> K{Decision changes future work?}
+    K -->|Yes| L[Update report, plan, or work snapshot]
+    L --> M[Route affected owner or dependent work]
+    K -->|No| M
+```
+
+The kit does not prove that a design is correct, that a test suite covers every failure
+mode, or that a worker will find every bad premise. Verification and independent review
+reduce specific risks when the task warrants them. They do not replace technical
+judgment or user decisions.
+
 ## Model routing: review and customize before use
 
 The bundled routes are an initial policy from the source workspace, not a claim
