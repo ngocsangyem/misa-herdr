@@ -1,8 +1,7 @@
 # Misa–Herdr kit
 
 Portable Misa coordinator policy and a constrained Herdr controller for an OMP
-workspace. It is extracted from the active Aspire control path, without `plans/`,
-reports, pane transcripts, portfolio snapshots, or account-specific state.
+workspace.
 
 ## What this installs
 
