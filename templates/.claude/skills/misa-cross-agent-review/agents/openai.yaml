@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cross-Agent Review"
+  short_description: "Independent Claude and Codex reviews"
+  default_prompt: "Use $misa-cross-agent-review to independently review this completed agent work before routing fixes."

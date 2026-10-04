@@ -1,0 +1,4 @@
+# Used only by .misa-herdr/bin/misa-controller. It prevents OMP from attaching
+# its automatic advisor to the constrained coordinator session.
+advisor:
+  enabled: false

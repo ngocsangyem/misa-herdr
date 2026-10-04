@@ -1,0 +1,36 @@
+#!/bin/zsh
+# Start the coordinator with only the constrained Herdr extension. This script
+# deliberately does not grant direct repository, shell, or browser tools.
+set -euo pipefail
+
+script_dir=${0:A:h}
+runtime_dir=${script_dir:h}
+workspace_dir=${runtime_dir:h}
+omp_bin=omp
+coordinator_model=anthropic/claude-fable-5-1
+
+if [[ ${1:-} == --help || ${1:-} == -h ]]; then
+  print 'Usage: ./.misa-herdr/bin/misa-controller [OMP user prompt arguments]'
+  print 'Requires omp and the configured coordinator model to be available on PATH/account.'
+  exit 0
+fi
+
+for argument in "$@"; do
+  case "$argument" in
+    --model|--model=*|--thinking|--thinking=*|--config|--config=*|--tools|--tools=*|--no-tools|--extension|--extension=*|-e|--advisor|--no-extensions|--hook|--hook=*|--cwd|--cwd=*|--system-prompt|--system-prompt=*|--system-prompt-template|--system-prompt-template=*|--append-system-prompt|--append-system-prompt=*|--no-skills|--skills|--skills=*|--no-rules)
+      print -u2 'misa-controller manages model, tool, extension, prompt, skill, rule, and working-directory flags.'
+      exit 2
+      ;;
+  esac
+done
+
+command -v "$omp_bin" >/dev/null 2>&1 || { print -u2 "OMP command not found: $omp_bin"; exit 127; }
+
+exec "$omp_bin" \
+  --cwd "$workspace_dir" \
+  --model "$coordinator_model" \
+  --thinking high \
+  --config "$runtime_dir/config/misa-controller.omp.yml" \
+  --extension "$runtime_dir/extensions/misa-herdr.ts" \
+  --no-tools \
+  "$@"

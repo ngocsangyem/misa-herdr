@@ -1,0 +1,144 @@
+# Misa–Herdr kit
+
+Portable Misa coordinator policy and a constrained Herdr controller for an OMP
+workspace. It is extracted from the active Aspire control path, without `plans/`,
+reports, pane transcripts, portfolio snapshots, or account-specific state.
+
+## What this installs
+
+- `.misa-herdr/`: launcher, OMP overlay, Herdr extension, command allowlist, and
+  local verification scripts.
+- `.claude/agents/`: Misa, Git manager, and portfolio-curator role definitions.
+- `.claude/skills/`: Misa Herdr, adaptive delivery, evidence, cross-provider
+  review, and portfolio skills.
+- `.agents/skills/`: OMP-discoverable adapters for the evidence and review skills.
+
+The controller is intentionally limited to listing, reading, waiting for,
+prompting, and starting registered Herdr agents, plus splitting a worker pane. It
+does not execute arbitrary shell commands, read files, write files, or create
+worktrees. Git owns branches and worktrees; Herdr owns panes and agent lifecycle.
+
+## Model routing: review and customize before use
+
+The bundled routes are an initial policy from the source workspace, not a claim
+that these models remain current, available, affordable, or appropriate for your
+account. Choose the providers, model IDs, thinking tiers, and escalation policy
+yourself before deployment. A user-specified model or provider takes precedence.
+
+Current baseline:
+
+| Work | Route in the kit |
+| --- | --- |
+| Misa coordinator | `anthropic/claude-fable-5-1`, `high` |
+| Routine plan/debug/implementation | Sonnet 5.5, normally `medium` |
+| Review of Anthropic-authored work | Codex GPT-6 Luna, `high` |
+| Independent review of Codex-authored work | Sonnet 5.5, `high` |
+| Deep RCA/high-stakes plan | Opus 5.5 only with user request/approval or verified insufficiency evidence |
+| Git/GitHub write | Codex GPT-6 Luna, `low`, through `git-manager` only |
+
+When changing routing, update the owners together:
+
+- `templates/.misa-herdr/bin/misa-controller` for the coordinator default.
+- `templates/.claude/skills/misa-herdr/references/model-routing.md` for worker
+  routes and escalation policy.
+- `templates/.claude/skills/misa-cross-agent-review/SKILL.md` for independent
+  review routing.
+- `templates/.claude/agents/misa.md` and `git-manager.md` when a role boundary or
+  Git-write route changes.
+
+Then install into a temporary workspace and run the two Node checks below before
+reinstalling into a real project. Do not edit only the README: it is navigation;
+the template files above are the active policy after installation.
+
+## Before installation
+
+This kit does not install Herdr, OMP, Node.js, credentials, models, Git remotes,
+or a profile index. Confirm `herdr`, `omp`, `node`, and the intended model/provider
+are already available in the target environment. The included model routes are
+policy defaults, not proof that a model is available to the target account.
+
+Run a dry run first:
+
+```bash
+./install.sh --target /absolute/path/to/project --dry-run
+```
+
+If every listed destination is acceptable, install without overwrite:
+
+```bash
+./install.sh --target /absolute/path/to/project
+```
+
+The installer stops on an existing managed destination. `--force` overwrites only
+the kit-managed files/directories; it never deletes a target directory, but it can
+replace a same-named file. Inspect the dry-run output immediately before using it.
+
+Validate the copied controller before starting it:
+
+```bash
+cd /absolute/path/to/project
+node .misa-herdr/scripts/test-misa-herdr-commands.cjs
+node .misa-herdr/scripts/verify-misa-controller.cjs
+```
+
+To start the coordinator from a Herdr-managed pane:
+
+```bash
+./.misa-herdr/bin/misa-controller
+```
+
+The extension refuses `herdr_control` unless `HERDR_ENV=1`. Starting the launcher
+from an ordinary terminal may open an OMP chat but cannot control Herdr workers.
+
+## Manual installation if the script is unavailable
+
+Copy these source paths to the same relative paths in the target; do not copy the
+whole target's `.claude/` or `.agents/` directory over an existing project:
+
+```text
+templates/.misa-herdr/                         -> <target>/.misa-herdr/
+templates/.claude/agents/{misa,git-manager,portfolio-curator}.md
+                                                -> <target>/.claude/agents/
+templates/.claude/skills/misa-*/               -> <target>/.claude/skills/
+templates/.agents/skills/misa-*/               -> <target>/.agents/skills/
+```
+
+Create missing parent directories only. Compare any existing same-named target
+file before replacing it. Then run both Node verification commands above. Do not
+manually set `HERDR_ENV`; it is a boundary signal inherited from an actual
+Herdr-managed pane, not a configuration switch.
+
+## Profile index is deliberately not installed
+
+A project/portfolio index is user-owned state. This kit provides only the
+progressive-disclosure mechanism in `misa-portfolio`; it does not invent projects,
+statuses, owners, or priorities. Create such an index from verified target evidence.
+
+Use this prompt with Codex, Claude, or another coding agent after installing the kit:
+
+```text
+Create a Markdown-first project index for this workspace using progressive
+disclosure. First inspect only the root instructions, repository layout, and
+existing durable docs. Then create a compact index that routes from workspace to
+one project card, then (only when needed) to current work snapshots and cited
+authoritative source/Git/test evidence. Preserve unknowns as needs-confirmation.
+Do not infer owner, priority, deadline, release state, project status, or facts from
+chat history. Do not copy terminal transcripts, secrets, customer data, or plans as
+the source of truth. Report each created path and the evidence used.
+```
+
+## Runtime-binding warning
+
+The kit ships the Misa role and canonical skills, but it does not claim that every
+OMP version automatically loads `.claude/agents/misa.md` or
+`.claude/skills/misa-herdr/`. The included launcher definitely loads the constrained
+extension. Verify your OMP version's role and project-skill discovery behavior in a
+non-production session before relying on Misa's prompt-level policy. The
+`.agents/skills/` files are adapters that point to canonical `.claude/skills/`
+content; do not maintain two full policy copies.
+
+## Scope notes
+
+`templates/workspace-policy/` contains optional text for manual merge into a
+target's own workspace instructions. It is never installed automatically because
+the target's authority and repository rules are local decisions.
