@@ -11,6 +11,8 @@ workspace.
 - `.claude/skills/`: Misa Herdr, adaptive delivery, evidence, cross-provider
   review, and portfolio skills.
 - `.agents/skills/`: OMP-discoverable adapters for the evidence and review skills.
+- `templates/workspace-policy/`: portable `AGENTS.md`, `CLAUDE.md`,
+  `identities.md`, and `.organization/` authority/routing templates.
 
 The controller is intentionally limited to listing, reading, waiting for,
 prompting, and starting registered Herdr agents, plus splitting a worker pane. It
@@ -71,6 +73,17 @@ If every listed destination is acceptable, install without overwrite:
 The installer stops on an existing managed destination. `--force` overwrites only
 the kit-managed files/directories; it never deletes a target directory, but it can
 replace a same-named file. Inspect the dry-run output immediately before using it.
+
+For a new workspace that has no established root agent policy, include the optional
+authority/routing layer only after reviewing it:
+
+```bash
+./install.sh --target /absolute/path/to/project --with-workspace-policy --dry-run
+./install.sh --target /absolute/path/to/project --with-workspace-policy
+```
+
+Do not use this option casually in an existing workspace: the root files define
+local authority and instructions and may already be owned by that project.
 
 Validate the copied controller before starting it:
 
@@ -138,6 +151,7 @@ content; do not maintain two full policy copies.
 
 ## Scope notes
 
-`templates/workspace-policy/` contains optional text for manual merge into a
-target's own workspace instructions. It is never installed automatically because
-the target's authority and repository rules are local decisions.
+`templates/workspace-policy/` contains optional `AGENTS.md`, `CLAUDE.md`,
+`identities.md`, and `.organization/` templates for manual merge or the explicit
+`--with-workspace-policy` mode. They are never installed by default because the
+target's authority and repository rules are local decisions.

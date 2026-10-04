@@ -3,17 +3,20 @@ set -euo pipefail
 
 usage() {
   cat <<'USAGE'
-Usage: ./install.sh --target ABSOLUTE_PATH [--dry-run] [--force]
+Usage: ./install.sh --target ABSOLUTE_PATH [--dry-run] [--force] [--with-workspace-policy]
 
 Copies the Misa–Herdr kit into an existing target workspace. Existing managed
 destinations cause a safe failure unless --force is supplied. --force overwrites
 kit-managed files but does not remove target directories.
+--with-workspace-policy also installs root AGENTS.md, CLAUDE.md, identities.md,
+and .organization/. Use only for a new workspace or after reviewing conflicts.
 USAGE
 }
 
 target=""
 dry_run=false
 force=false
+with_workspace_policy=false
 
 while (($#)); do
   case "$1" in
@@ -24,6 +27,7 @@ while (($#)); do
       ;;
     --dry-run) dry_run=true; shift ;;
     --force) force=true; shift ;;
+    --with-workspace-policy) with_workspace_policy=true; shift ;;
     --help|-h) usage; exit 0 ;;
     *) printf 'Unknown option: %s\n' "$1" >&2; usage >&2; exit 2 ;;
   esac
@@ -50,11 +54,20 @@ items=(
   .agents/skills/misa-grounded-evidence
 )
 
+policy_items=(AGENTS.md CLAUDE.md identities.md .organization)
+
 conflicts=()
 for item in "${items[@]}"; do
   [[ -e "$source_dir/$item" ]] || { printf 'Kit source missing: %s\n' "$item" >&2; exit 1; }
   [[ ! -e "$target/$item" ]] || conflicts+=("$item")
 done
+
+if [[ "$with_workspace_policy" == true ]]; then
+  for item in "${policy_items[@]}"; do
+    [[ -e "$source_dir/workspace-policy/$item" ]] || { printf 'Kit policy source missing: %s\n' "$item" >&2; exit 1; }
+    [[ ! -e "$target/$item" ]] || conflicts+=("$item")
+  done
+fi
 
 printf 'Target: %s\n' "$target"
 printf 'Mode: %s\n' "$([[ "$dry_run" == true ]] && printf dry-run || printf install)"
@@ -65,6 +78,16 @@ for item in "${items[@]}"; do
     printf 'CREATE:  %s\n' "$item"
   fi
 done
+
+if [[ "$with_workspace_policy" == true ]]; then
+  for item in "${policy_items[@]}"; do
+    if [[ -e "$target/$item" ]]; then
+      printf 'REPLACE: %s\n' "$item"
+    else
+      printf 'CREATE:  %s\n' "$item"
+    fi
+  done
+fi
 
 if ((${#conflicts[@]})) && [[ "$force" != true ]]; then
   printf '\nRefusing to overwrite existing managed paths. Review these paths, then rerun with --force only if replacement is intended:\n' >&2
@@ -85,6 +108,20 @@ for item in "${items[@]}"; do
     cp -- "$source_path" "$target_path"
   fi
 done
+
+if [[ "$with_workspace_policy" == true ]]; then
+  for item in "${policy_items[@]}"; do
+    source_path=$source_dir/workspace-policy/$item
+    target_path=$target/$item
+    mkdir -p -- "$(dirname -- "$target_path")"
+    if [[ -d "$source_path" ]]; then
+      mkdir -p -- "$target_path"
+      cp -R -- "$source_path/." "$target_path/"
+    else
+      cp -- "$source_path" "$target_path"
+    fi
+  done
+fi
 
 chmod +x "$target/.misa-herdr/bin/misa-controller"
 printf '\nInstalled. Run:\n  cd %s\n  node .misa-herdr/scripts/test-misa-herdr-commands.cjs\n  node .misa-herdr/scripts/verify-misa-controller.cjs\n' "$target"
