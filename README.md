@@ -85,6 +85,20 @@ authority/routing layer only after reviewing it:
 Do not use this option casually in an existing workspace: the root files define
 local authority and instructions and may already be owned by that project.
 
+### Set Claude's default agent without replacing settings
+
+To set Claude Code's default agent, use the separate opt-in flag:
+
+```bash
+./install.sh --target /absolute/path/to/project --set-default-agent --dry-run
+./install.sh --target /absolute/path/to/project --set-default-agent
+```
+
+If `<target>/.claude/settings.json` already exists, the installer asks before
+changing it. On approval it parses that JSON object and changes only its top-level
+`"agent"` value to `"misa"`; all other JSON keys remain. Invalid JSON stops the
+installation at this step rather than guessing how to repair the file.
+
 Validate the copied controller before starting it:
 
 ```bash
@@ -114,6 +128,11 @@ templates/.claude/agents/{misa,git-manager,portfolio-curator}.md
 templates/.claude/skills/misa-*/               -> <target>/.claude/skills/
 templates/.agents/skills/misa-*/               -> <target>/.agents/skills/
 ```
+
+For the optional default-agent setting, use a JSON-aware editor or run the included
+`<target>/.misa-herdr/scripts/set-default-agent.cjs <target>/.claude/settings.json`.
+It preserves existing top-level keys and sets only `"agent": "misa"`; do not replace
+the entire settings file with a one-line example.
 
 Create missing parent directories only. Compare any existing same-named target
 file before replacing it. Then run both Node verification commands above. Do not

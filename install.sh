@@ -3,13 +3,15 @@ set -euo pipefail
 
 usage() {
   cat <<'USAGE'
-Usage: ./install.sh --target ABSOLUTE_PATH [--dry-run] [--force] [--with-workspace-policy]
+Usage: ./install.sh --target ABSOLUTE_PATH [--dry-run] [--force] [--with-workspace-policy] [--set-default-agent]
 
 Copies the Misa–Herdr kit into an existing target workspace. Existing managed
 destinations cause a safe failure unless --force is supplied. --force overwrites
 kit-managed files but does not remove target directories.
 --with-workspace-policy also installs root AGENTS.md, CLAUDE.md, identities.md,
 and .organization/. Use only for a new workspace or after reviewing conflicts.
+--set-default-agent sets only the top-level "agent" field in .claude/settings.json
+to "misa". When that file already exists, the installer asks first.
 USAGE
 }
 
@@ -17,6 +19,7 @@ target=""
 dry_run=false
 force=false
 with_workspace_policy=false
+set_default_agent=false
 
 while (($#)); do
   case "$1" in
@@ -28,6 +31,7 @@ while (($#)); do
     --dry-run) dry_run=true; shift ;;
     --force) force=true; shift ;;
     --with-workspace-policy) with_workspace_policy=true; shift ;;
+    --set-default-agent) set_default_agent=true; shift ;;
     --help|-h) usage; exit 0 ;;
     *) printf 'Unknown option: %s\n' "$1" >&2; usage >&2; exit 2 ;;
   esac
@@ -67,6 +71,20 @@ if [[ "$with_workspace_policy" == true ]]; then
     [[ -e "$source_dir/workspace-policy/$item" ]] || { printf 'Kit policy source missing: %s\n' "$item" >&2; exit 1; }
     [[ ! -e "$target/$item" ]] || conflicts+=("$item")
   done
+fi
+
+settings_path=$target/.claude/settings.json
+if [[ "$set_default_agent" == true ]]; then
+  if [[ "$dry_run" == true ]]; then
+    printf '%s: %s\n' "$([[ -e "$settings_path" ]] && printf 'SET (preserve other JSON keys)' || printf CREATE)" .claude/settings.json
+  elif [[ -e "$settings_path" ]]; then
+    printf 'Set only .claude/settings.json top-level "agent" to "misa" and preserve other JSON keys? [y/N] '
+    read -r confirmation
+    if [[ "$confirmation" != y && "$confirmation" != Y ]]; then
+      printf 'Skipped .claude/settings.json.\n'
+      set_default_agent=false
+    fi
+  fi
 fi
 
 printf 'Target: %s\n' "$target"
@@ -124,4 +142,7 @@ if [[ "$with_workspace_policy" == true ]]; then
 fi
 
 chmod +x "$target/.misa-herdr/bin/misa-controller"
+if [[ "$set_default_agent" == true ]]; then
+  node "$target/.misa-herdr/scripts/set-default-agent.cjs" "$settings_path"
+fi
 printf '\nInstalled. Run:\n  cd %s\n  node .misa-herdr/scripts/test-misa-herdr-commands.cjs\n  node .misa-herdr/scripts/verify-misa-controller.cjs\n' "$target"

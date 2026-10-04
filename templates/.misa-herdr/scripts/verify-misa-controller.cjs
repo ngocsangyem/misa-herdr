@@ -27,6 +27,7 @@ expectNot(commands, /child_process|execSync|spawnSync/, 'allowlist must not shel
 
 for (const relative of [
   '.claude/agents/misa.md',
+  '.misa-herdr/scripts/set-default-agent.cjs',
   '.claude/skills/misa-herdr/SKILL.md',
   '.claude/skills/misa-grounded-evidence/SKILL.md',
   '.claude/skills/misa-cross-agent-review/SKILL.md',
