@@ -10,14 +10,15 @@ const expect = (text, pattern, message) => { if (!pattern.test(text)) failures.p
 const expectNot = (text, pattern, message) => { if (pattern.test(text)) failures.push(message); };
 
 const launcher = read('.misa-herdr/bin/misa-controller');
-expect(launcher, /--extension .*misa-herdr\.ts/, 'launcher must load the constrained extension');
-expect(launcher, /--no-tools/, 'launcher must expose no built-in tools');
-expectNot(launcher, /--tools bash/, 'launcher must not expose Bash');
+expect(launcher, /exec claude --agent misa/, 'launcher must start Claude Code with Misa');
+expectNot(launcher, /exec .*omp/, 'launcher must not start Misa as OMP');
 
-const extension = read('.misa-herdr/extensions/misa-herdr.ts');
-expect(extension, /name: 'herdr_control'/, 'extension must register Herdr control');
-expect(extension, /HERDR_ENV_KEY/, 'extension must enforce the Herdr-pane boundary');
-expect(extension, /setActiveTools\(\['herdr_control'\]\)/, 'extension must activate only Herdr control');
+const mcpServer = read('.misa-herdr/mcp/misa-herdr-mcp-server.cjs');
+expect(mcpServer, /name: 'herdr_control'/, 'MCP server must register Herdr control');
+expect(mcpServer, /HERDR_ENV/, 'MCP server must enforce the Herdr-pane boundary');
+
+const mcpConfig = read('.mcp.json');
+expect(mcpConfig, /"misa-herdr"/, 'installed workspace must register the Misa Herdr MCP server');
 
 const commands = read('.misa-herdr/extensions/misa-herdr-commands.cjs');
 expect(commands, /case 'agent_list'/, 'allowlist must be explicit');

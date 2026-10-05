@@ -145,4 +145,5 @@ chmod +x "$target/.misa-herdr/bin/misa-controller"
 if [[ "$set_default_agent" == true ]]; then
   node "$target/.misa-herdr/scripts/set-default-agent.cjs" "$settings_path"
 fi
+node "$target/.misa-herdr/scripts/register-misa-herdr-mcp.cjs" "$target"
 printf '\nInstalled. Run:\n  cd %s\n  node .misa-herdr/scripts/test-misa-herdr-commands.cjs\n  node .misa-herdr/scripts/verify-misa-controller.cjs\n' "$target"

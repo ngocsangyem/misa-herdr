@@ -1,12 +1,12 @@
 # Misa–Herdr kit
 
-Portable Misa coordinator policy and a constrained Herdr controller for an OMP
-workspace.
+Portable Misa coordinator policy and a constrained Herdr controller for a Claude Code
+workspace with OMP workers.
 
 ## What this installs
 
-- `.misa-herdr/`: launcher, OMP overlay, Herdr extension, command allowlist, and
-  local verification scripts.
+- `.misa-herdr/`: Claude Code launcher, local Herdr MCP server, command allowlist,
+  and local verification scripts.
 - `.claude/agents/`: Misa, Git manager, and portfolio-curator role definitions.
 - `.claude/skills/`: Misa Herdr, adaptive delivery, evidence, cross-provider
   review, and portfolio skills.
@@ -162,11 +162,12 @@ node .misa-herdr/scripts/verify-misa-controller.cjs
 To start the coordinator from a Herdr-managed pane:
 
 ```bash
-./.misa-herdr/bin/misa-controller
+./.misa-herdr/bin/misa-controller --dangerously-skip-permissions
 ```
 
-The extension refuses `herdr_control` unless `HERDR_ENV=1`. Starting the launcher
-from an ordinary terminal may open an OMP chat but cannot control Herdr workers.
+The MCP tool refuses `herdr_control` unless `HERDR_ENV=1`. Starting the launcher
+from an ordinary terminal may open a Claude Code chat but cannot control Herdr workers.
+On first use, approve the project `misa-herdr` server through Claude Code's `/mcp`.
 
 ## Manual installation if the script is unavailable
 

@@ -22,10 +22,12 @@ the target workspace, or a pane-close request.
 
 ## Misa session identity
 
-The project settings do not assign a default agent role. Start the controlling
-Chief-of-Staff session with `scripts/misa-controller`. An OMP worker receives
-its business-role boundary in its first mission prompt and must never infer it from
-the active model.
+Start the controlling Chief-of-Staff session as Claude Code with `claude --agent misa`
+(or the installed `scripts/misa-controller`). `herdr_control` is a Claude Code project
+MCP tool; OMP is only the worker runtime. Start Misa from a Herdr-managed pane so the
+tool inherits session context. If it is absent, restart the Claude Code session and
+approve/reconnect the `misa-herdr` server in `/mcp`; do not convert Misa into OMP or
+bypass the tool with raw Bash.
 
 ## ID and checkout rules
 

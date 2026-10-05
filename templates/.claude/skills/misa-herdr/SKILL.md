@@ -17,11 +17,10 @@ panes start a neutral login `/bin/zsh` shell. Misa creates the pane, then starts
 in that available shell after selecting its role and model routing. Never start a
 second agent in an occupied pane.
 
-OMP discovers the user's AgentKit skills from `~/.agents/skills` and project skills
-from `.agents/skills` by default. Keep that discovery enabled. A worker should let
-OMP match the smallest relevant skill from its task; require `/skill:<name>` in the
-mission only when Misa needs a particular playbook, such as `ak:plan` or `ak:cook`.
-Do not paste full skill bodies into worker prompts.
+OMP may discover globally installed and project-local skills, depending on its local
+configuration. A worker should use the smallest available capability relevant to its
+task; require a named playbook only after confirming it exists in that runtime. Do not
+paste full skill bodies into worker prompts.
 
 ## Hard preflight
 
