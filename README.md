@@ -1,15 +1,17 @@
-# Misa–Herdr kit
+# Herdr controller kit
 
-Portable Misa coordinator policy and a constrained Herdr controller for a Claude Code
-workspace with OMP workers.
+Portable controller policy and a constrained Herdr bridge for a Claude Code workspace
+with OMP workers. The controller can be any Claude Code agent role; the bundled Misa
+role is only the default example.
 
 ## What this installs
 
 - `.misa-herdr/`: Claude Code launcher, local Herdr MCP server, command allowlist,
   and local verification scripts.
-- `.claude/agents/`: Misa, Git manager, and portfolio-curator role definitions.
-- `.claude/skills/`: Misa Herdr, adaptive delivery, evidence, cross-provider
-  review, and portfolio skills.
+- `.claude/agents/`: optional controller, Git manager, and portfolio-curator role
+  definitions.
+- `.claude/skills/`: controller lifecycle, adaptive delivery, evidence,
+  cross-provider review, and portfolio skills.
 - `.agents/skills/`: OMP-discoverable adapters for the evidence and review skills.
 - `templates/workspace-policy/`: portable `AGENTS.md`, `CLAUDE.md`,
   `identities.md`, and `.organization/` authority/routing templates.
@@ -21,7 +23,7 @@ worktrees. Git owns branches and worktrees; Herdr owns panes and agent lifecycle
 
 ## What coordination problems it addresses
 
-This kit separates coordination from implementation. Misa keeps the user’s outcome,
+This kit separates coordination from implementation. The controller keeps the user’s outcome,
 authority boundaries, ownership, dependencies, and acceptance conditions in view.
 Workers inspect source, test hypotheses, make scoped changes, and return compact
 evidence-backed handoffs.
@@ -34,7 +36,7 @@ The policy is designed for a few recurring failures in multi-agent work:
 - A decision made in a transient message never reaches the worker whose next step
   depends on it.
 
-Misa performs a short blind-spot intake before routing a request. It separates the
+The controller performs a short blind-spot intake before routing a request. It separates the
 outcome, non-negotiable constraints, revisable approaches, and unknowns. It does not
 spawn a critic for every prompt. A read-only scout is used only when an unknown needs
 evidence and could change the route; a user question is reserved for a user-owned
@@ -42,14 +44,14 @@ decision.
 
 When a worker has evidence that a current approach no longer serves the outcome, it
 can send a `DESIGN_CHANGE_REQUEST`. The request names the premise, evidence, impact,
-options, and requested disposition. Misa either keeps the approach with a reason,
+options, and requested disposition. The controller either keeps the approach with a reason,
 permits a local adaptation, routes the work to the owner, or asks the user. The worker
 does not edit another owner’s scope. If the decision changes future work, it is written
 to the task’s report, plan, or work snapshot before affected work continues.
 
 ```mermaid
 flowchart TD
-    A[User request] --> B[Misa blind-spot intake]
+    A[User request] --> B[Controller blind-spot intake]
     B --> C{Unknown changes routing?}
     C -->|No| D[Route bounded worker]
     C -->|Needs evidence| E[Read-only discovery]
@@ -59,7 +61,7 @@ flowchart TD
     D --> G{Evidence challenges current approach?}
     G -->|No| H[Verify and hand off]
     G -->|Yes| I[DESIGN_CHANGE_REQUEST]
-    I --> J[Misa records disposition]
+    I --> J[Controller records disposition]
     J --> K{Decision changes future work?}
     K -->|Yes| L[Update report, plan, or work snapshot]
     L --> M[Route affected owner or dependent work]
@@ -82,22 +84,22 @@ Current baseline:
 
 | Work | Route in the kit |
 | --- | --- |
-| Misa coordinator | `anthropic/claude-fable-5-1`, `high` |
+| Controller example | `anthropic/claude-fable-5-1`, `high` |
 | Routine plan/debug/implementation | Sonnet 5.5, normally `medium` |
 | Review of Anthropic-authored work | Codex GPT-6 Luna, `high` |
 | Independent review of Codex-authored work | Sonnet 5.5, `high` |
 | Deep RCA/high-stakes plan | Opus 5.5 only with user request/approval or verified insufficiency evidence |
 | Git/GitHub write | Codex GPT-6 Luna, `low`, through `git-manager` only |
 
-When changing routing, update the owners together:
+When changing routing, update the matching controller and worker policy together:
 
-- `templates/.misa-herdr/bin/misa-controller` for the coordinator default.
+- The selected controller launch command and role definition.
 - `templates/.claude/skills/misa-herdr/references/model-routing.md` for worker
   routes and escalation policy.
 - `templates/.claude/skills/misa-cross-agent-review/SKILL.md` for independent
   review routing.
-- `templates/.claude/agents/misa.md` and `git-manager.md` when a role boundary or
-  Git-write route changes.
+- The selected controller role and `git-manager.md` when a role boundary or Git-write
+  route changes.
 
 Then install into a temporary workspace and run the two Node checks below before
 reinstalling into a real project. Do not edit only the README: it is navigation;
@@ -159,15 +161,21 @@ node .misa-herdr/scripts/test-misa-herdr-commands.cjs
 node .misa-herdr/scripts/verify-misa-controller.cjs
 ```
 
-To start the coordinator from a Herdr-managed pane:
+To start a controller from a Herdr-managed pane, use the bundled default role:
 
 ```bash
 ./.misa-herdr/bin/misa-controller --dangerously-skip-permissions
 ```
 
-The MCP tool refuses `herdr_control` unless `HERDR_ENV=1`. Starting the launcher
+Or select any project agent role that allows `mcp__misa-herdr__herdr_control`:
+
+```bash
+./.misa-herdr/bin/misa-controller --agent <your-role> --dangerously-skip-permissions
+```
+
+The MCP tool refuses `herdr_control` unless `HERDR_ENV=1`. Starting a controller
 from an ordinary terminal may open a Claude Code chat but cannot control Herdr workers.
-On first use, approve the project `misa-herdr` server through Claude Code's `/mcp`.
+On first use, approve the project MCP server through Claude Code's `/mcp`.
 
 ## Manual installation if the script is unavailable
 
@@ -213,11 +221,10 @@ the source of truth. Report each created path and the evidence used.
 
 ## Runtime-binding warning
 
-The kit ships the Misa role and canonical skills, but it does not claim that every
-OMP version automatically loads `.claude/agents/misa.md` or
-`.claude/skills/misa-herdr/`. The included launcher definitely loads the constrained
-extension. Verify your OMP version's role and project-skill discovery behavior in a
-non-production session before relying on Misa's prompt-level policy. The
+The kit ships an example controller role and canonical skills, but it does not claim
+that every runtime automatically loads a selected role or project skills. Verify your
+Claude Code version's project-MCP approval and skill discovery behavior in a
+non-production session before relying on any role's prompt-level policy. The
 `.agents/skills/` files are adapters that point to canonical `.claude/skills/`
 content; do not maintain two full policy copies.
 

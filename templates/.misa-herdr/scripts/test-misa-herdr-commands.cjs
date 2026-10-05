@@ -3,6 +3,7 @@
 
 const assert = require('node:assert/strict');
 const { buildHerdrCommand } = require('../extensions/misa-herdr-commands.cjs');
+const { isExpectedWaitTimeout } = require('../extensions/misa-herdr-wait-result.cjs');
 const path = require('node:path');
 const workspace = path.resolve(__dirname, '..', '..');
 
@@ -47,4 +48,7 @@ assert.throws(
   /escalation_evidence must not be blank/,
 );
 assert.throws(() => buildHerdrCommand({ action: 'shell', command: 'cat README.md' }, workspace), /Unsupported Herdr action/);
+assert.equal(isExpectedWaitTimeout({ action: 'agent_wait', timeout_ms: 300000 }, { code: 1, stderr: 'Timed out after 300000ms.' }), true);
+assert.equal(isExpectedWaitTimeout({ action: 'agent_wait', timeout_ms: 300000 }, { code: 1, stderr: 'target was not found' }), false);
+assert.equal(isExpectedWaitTimeout({ action: 'agent_wait', timeout_ms: 300000 }, { code: 0, stderr: '' }), false);
 process.stdout.write('Misa Herdr command allowlist verified.\n');

@@ -16,9 +16,10 @@ same `--machine` prefix to every roster, get, read, wait, and prompt command.
 
 For a live wave, wait for a meaningful deadline rather than polling every minute. The
 controller allows a single `agent_wait` of up to 300,000 ms: use a shorter bounded
-wait for routine work and five minutes for a longer active phase. A timeout means
-continue monitoring; it does not mean the work failed or the prompt was absent. Do
-not resend the mission after a timeout. Refresh the roster only after that wait, a
+wait for routine work and five minutes for a longer active phase. When that explicit
+wait expires, `herdr_control` returns a normal monitoring result rather than an MCP
+failure. It does not mean the work failed or the prompt was absent. Do not resend the
+mission after a timeout. Refresh the roster only after that wait, a
 prompt result, a dependency checkpoint, or resumed coordination. On `done`, process
 that worker through the decision loop before advancing dependents. On `blocked`,
 surface the question to the user; Misa cannot inspect or answer a raw approval UI.

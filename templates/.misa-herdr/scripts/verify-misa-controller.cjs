@@ -10,7 +10,8 @@ const expect = (text, pattern, message) => { if (!pattern.test(text)) failures.p
 const expectNot = (text, pattern, message) => { if (pattern.test(text)) failures.push(message); };
 
 const launcher = read('.misa-herdr/bin/misa-controller');
-expect(launcher, /exec claude --agent misa/, 'launcher must start Claude Code with Misa');
+expect(launcher, /controller_agent=misa/, 'launcher must retain Misa only as the default role');
+expect(launcher, /exec claude --agent "\$controller_agent"/, 'launcher must start Claude Code with the selected role');
 expectNot(launcher, /exec .*omp/, 'launcher must not start Misa as OMP');
 
 const mcpServer = read('.misa-herdr/mcp/misa-herdr-mcp-server.cjs');

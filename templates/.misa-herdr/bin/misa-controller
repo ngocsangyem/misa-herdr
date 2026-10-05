@@ -5,20 +5,29 @@ set -euo pipefail
 script_dir=${0:A:h}
 runtime_dir=${script_dir:h}
 workspace_dir=${runtime_dir:h}
+controller_agent=misa
+pass_through=()
 
 if [[ ${1:-} == --help || ${1:-} == -h ]]; then
   print 'Usage: ./.misa-herdr/bin/misa-controller [Claude Code user prompt arguments]'
   exit 0
 fi
 
-for argument in "$@"; do
-  case "$argument" in
-    --agent|--agent=*|--mcp-config|--mcp-config=*)
-      print -u2 'misa-controller fixes the Claude Code Misa role and project MCP configuration.'
+while (($#)); do
+  case "$1" in
+    --agent)
+      [[ $# -ge 2 ]] || { print -u2 '--agent requires a role name.'; exit 2; }
+      controller_agent=$2
+      shift 2
+      ;;
+    --agent=*) controller_agent=${1#--agent=}; shift ;;
+    --mcp-config|--mcp-config=*)
+      print -u2 'misa-controller fixes the project MCP configuration.'
       exit 2
       ;;
+    *) pass_through+=("$1"); shift ;;
   esac
 done
 
 cd "$workspace_dir"
-exec claude --agent misa "$@"
+exec claude --agent "$controller_agent" "${pass_through[@]}"

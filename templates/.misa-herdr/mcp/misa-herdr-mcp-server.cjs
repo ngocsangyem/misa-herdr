@@ -5,6 +5,7 @@ const { spawn } = require('node:child_process');
 const path = require('node:path');
 const readline = require('node:readline');
 const { buildHerdrCommand, formatHerdrOutput } = require('../extensions/misa-herdr-commands.cjs');
+const { isExpectedWaitTimeout } = require('../extensions/misa-herdr-wait-result.cjs');
 
 const workspace = process.env.CLAUDE_PROJECT_DIR || path.resolve(__dirname, '..', '..', '..');
 const schema = { type: 'object', additionalProperties: false, required: ['action'], properties: {
@@ -21,7 +22,7 @@ function run(args) {
     child.stdout.on('data', (chunk) => { stdout += chunk; });
     child.stderr.on('data', (chunk) => { stderr += chunk; });
     child.on('error', reject);
-    child.on('close', (code) => code === 0 ? resolve({ stdout, stderr }) : reject(new Error(formatHerdrOutput({ stdout, stderr }))));
+    child.on('close', (code) => resolve({ stdout, stderr, code }));
   });
 }
 async function handle(request) {
@@ -30,7 +31,13 @@ async function handle(request) {
   if (request.method === 'tools/call') {
     if (request.params?.name !== 'herdr_control') throw new Error('Unknown tool.');
     if (process.env.HERDR_ENV !== '1') return result('Refused: this controller is available only from a Herdr-managed Misa pane.', true);
-    try { return result(formatHerdrOutput(await run(buildHerdrCommand(request.params.arguments || {}, workspace)))); }
+    try {
+      const params = request.params.arguments || {};
+      const response = await run(buildHerdrCommand(params, workspace));
+      if (isExpectedWaitTimeout(params, response)) return result(`Worker has not reached the requested state within ${params.timeout_ms} ms. This is a monitoring timeout, not a worker failure. Do not resend the mission; continue with agent_list at the next checkpoint.`);
+      if (response.code !== 0) throw new Error(formatHerdrOutput(response) || `Herdr exited with status ${response.code}.`);
+      return result(formatHerdrOutput(response));
+    }
     catch (error) { return result(`Herdr control failed: ${error instanceof Error ? error.message : String(error)}`, true); }
   }
   if (request.id === undefined) return undefined;
