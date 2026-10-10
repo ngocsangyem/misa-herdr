@@ -85,10 +85,10 @@ Current baseline:
 | Work | Route in the kit |
 | --- | --- |
 | Controller example | `anthropic/claude-fable-5-1`, `high` |
-| Routine plan/debug/implementation | Sonnet 5.5, normally `medium` |
+| Routine plan/debug/implementation | Opus 5.5, normally `medium` |
 | Review of Anthropic-authored work | Codex GPT-6 Luna, `high` |
 | Independent review of Codex-authored work | Sonnet 5.5, `high` |
-| Deep RCA/high-stakes plan | Opus 5.5 only with user request/approval or verified insufficiency evidence |
+| Deep RCA/high-stakes plan | Opus 5.5, normally `high` |
 | Git/GitHub write | Codex GPT-6 Luna, `low`, through `git-manager` only |
 
 When changing routing, update the matching controller and worker policy together:

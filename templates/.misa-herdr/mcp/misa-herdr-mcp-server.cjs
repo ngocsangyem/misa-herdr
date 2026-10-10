@@ -5,19 +5,22 @@ const { spawn } = require('node:child_process');
 const path = require('node:path');
 const readline = require('node:readline');
 const { buildHerdrCommand, formatHerdrOutput } = require('../extensions/misa-herdr-commands.cjs');
+const { createMisaOwnership, paneIdFromHerdrResult } = require('../extensions/misa-herdr-ownership.cjs');
 const { isExpectedWaitTimeout } = require('../extensions/misa-herdr-wait-result.cjs');
 
-const workspace = process.env.CLAUDE_PROJECT_DIR || path.resolve(__dirname, '..', '..', '..');
+const HERDR_BIN = process.env.HERDR_BIN || 'herdr';
+const workspace = process.env.CLAUDE_PROJECT_DIR || path.resolve(__dirname, '..', '..');
+const ownership = createMisaOwnership();
 const schema = { type: 'object', additionalProperties: false, required: ['action'], properties: {
-  action: { type: 'string', enum: ['agent_list', 'agent_get', 'agent_handoff', 'agent_start', 'agent_wait', 'agent_prompt', 'pane_split'] },
-  target: { type: 'string' }, name: { type: 'string' }, pane_id: { type: 'string' }, message: { type: 'string' }, wait: { type: 'boolean' }, until: { type: 'string' }, timeout_ms: { type: 'integer' }, cwd: { type: 'string' }, direction: { type: 'string' }, model: { type: 'string' }, thinking: { type: 'string' }, escalation_basis: { type: 'string', enum: ['worker_evidence', 'user_request', 'user_approval'] }, escalation_evidence: { type: 'string' },
+  action: { type: 'string', enum: ['agent_list', 'agent_get', 'agent_handoff', 'agent_start', 'agent_stop', 'agent_wait', 'agent_prompt', 'pane_split', 'pane_close'] },
+  target: { type: 'string' }, name: { type: 'string' }, pane_id: { type: 'string' }, message: { type: 'string' }, wait: { type: 'boolean' }, until: { type: 'string' }, timeout_ms: { type: 'integer' }, cwd: { type: 'string' }, direction: { type: 'string' }, model: { type: 'string' }, thinking: { type: 'string' }, reference_image: { type: 'string' }, worker_kind: { type: 'string', enum: ['omp', 'claude'] }, claude_agent: { type: 'string', enum: ['design-analyst'] },
 } };
 
 function send(message) { process.stdout.write(`${JSON.stringify(message)}\n`); }
 function result(text, isError = false) { return { content: [{ type: 'text', text }], ...(isError ? { isError: true } : {}) }; }
 function run(args) {
   return new Promise((resolve, reject) => {
-    const child = spawn('herdr', args, { cwd: workspace, env: process.env, shell: false });
+    const child = spawn(HERDR_BIN, args, { cwd: workspace, env: process.env, shell: false });
     let stdout = ''; let stderr = '';
     child.stdout.on('data', (chunk) => { stdout += chunk; });
     child.stderr.on('data', (chunk) => { stderr += chunk; });
@@ -33,9 +36,17 @@ async function handle(request) {
     if (process.env.HERDR_ENV !== '1') return result('Refused: this controller is available only from a Herdr-managed Misa pane.', true);
     try {
       const params = request.params.arguments || {};
+      if (params.action === 'agent_start') ownership.requireOwnedPane(params.pane_id);
+      if (params.action === 'agent_stop') ownership.requireOwnedAgent(params.target);
+      if (params.action === 'agent_wait' && (params.until === 'idle' || params.until === 'done')) ownership.requireOwnedAgent(params.target);
+      if (params.action === 'pane_close') ownership.requireClosablePane(params.pane_id);
       const response = await run(buildHerdrCommand(params, workspace));
       if (isExpectedWaitTimeout(params, response)) return result(`Worker has not reached the requested state within ${params.timeout_ms} ms. This is a monitoring timeout, not a worker failure. Do not resend the mission; continue with agent_list at the next checkpoint.`);
       if (response.code !== 0) throw new Error(formatHerdrOutput(response) || `Herdr exited with status ${response.code}.`);
+      if (params.action === 'pane_split') ownership.registerPane(paneIdFromHerdrResult(response));
+      if (params.action === 'agent_start') ownership.registerAgent(params.name, params.pane_id);
+      if (params.action === 'agent_wait' && (params.until === 'idle' || params.until === 'done')) ownership.markSettled(params.target, params.until);
+      if (params.action === 'pane_close') ownership.releasePane(params.pane_id);
       return result(formatHerdrOutput(response));
     }
     catch (error) { return result(`Herdr control failed: ${error instanceof Error ? error.message : String(error)}`, true); }

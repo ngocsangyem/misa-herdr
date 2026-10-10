@@ -24,11 +24,15 @@ expect(mcpConfig, /"misa-herdr"/, 'installed workspace must register the Misa He
 const commands = read('.misa-herdr/extensions/misa-herdr-commands.cjs');
 expect(commands, /case 'agent_list'/, 'allowlist must be explicit');
 expect(commands, /case 'agent_start'/, 'allowlist must support OMP startup');
-expect(commands, /requireOpusEscalation/, 'allowlist must gate Opus starts');
+expect(commands, /CLAUDE_FIGMA_AGENTS/, 'allowlist must restrict direct Claude Figma work');
+expect(commands, /referenceImagePath/, 'allowlist must validate OMP visual-reference artifacts');
+expect(commands, /pane_close/, 'allowlist must support guarded cleanup');
 expectNot(commands, /child_process|execSync|spawnSync/, 'allowlist must not shell out directly');
 
 for (const relative of [
   '.claude/agents/misa.md',
+  '.claude/agents/design-analyst.md',
+  '.claude/agents/visual-verifier.md',
   '.misa-herdr/scripts/set-default-agent.cjs',
   '.claude/skills/misa-herdr/SKILL.md',
   '.claude/skills/misa-grounded-evidence/SKILL.md',
@@ -37,6 +41,9 @@ for (const relative of [
 ]) {
   if (!fs.existsSync(path.join(workspace, relative))) failures.push(`missing installed policy: ${relative}`);
 }
+const misa = read('.claude/agents/misa.md');
+expect(misa, /Never accept a code-changing worker's handoff by itself/, 'controller policy must require independent verification');
+expect(misa, /read-only\s+`design-analyst` Claude route/, 'controller policy must constrain Figma discovery');
 
 if (failures.length) {
   process.stderr.write(`${failures.map((failure) => `FAIL: ${failure}`).join('\n')}\n`);

@@ -10,18 +10,12 @@ const AGENT_NAME_PATTERN = /^[a-z][a-z0-9_-]{0,31}$/;
 const MODEL_PATTERN = /^[a-z0-9][a-z0-9._-]*\/[A-Za-z0-9._:-]{1,160}$/;
 const THINKING_TIERS = new Set(['low', 'medium', 'high', 'xhigh']);
 const WAIT_STATES = new Set(['idle', 'done', 'blocked']);
-const OPUS_55_MODEL = 'anthropic/claude-opus-5-5';
-const OPUS_ESCALATION_BASES = new Set(['worker_evidence', 'user_request', 'user_approval']);
+const CLAUDE_FIGMA_AGENTS = new Set(['design-analyst']);
+const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp']);
 
 function requiredString(value, name) {
   if (typeof value !== 'string' || value.length === 0) throw new Error(`${name} is required.`);
   return value;
-}
-
-function requiredNonBlankString(value, name) {
-  const result = requiredString(value, name).trim();
-  if (result.length === 0) throw new Error(`${name} must not be blank.`);
-  return result;
 }
 
 function target(value, name = 'target') {
@@ -60,14 +54,12 @@ function optionalTimeout(args, value) {
   if (valueMs !== undefined) args.push('--timeout', String(valueMs));
 }
 
-function requireOpusEscalation(input, model) {
-  if (model !== OPUS_55_MODEL) return;
-
-  const basis = requiredString(input.escalation_basis, 'escalation_basis');
-  if (!OPUS_ESCALATION_BASES.has(basis)) {
-    throw new Error('escalation_basis must be worker_evidence, user_request, or user_approval for Opus 5.5.');
+function referenceImagePath(value, workspace) {
+  const resolved = workspacePath(value, workspace);
+  if (!IMAGE_EXTENSIONS.has(path.extname(resolved).toLowerCase())) {
+    throw new Error('reference_image must be a PNG, JPEG, or WebP file inside the target workspace.');
   }
-  requiredNonBlankString(input.escalation_evidence, 'escalation_evidence');
+  return resolved;
 }
 
 function buildHerdrCommand(input, workspace) {
@@ -78,16 +70,25 @@ function buildHerdrCommand(input, workspace) {
     case 'agent_handoff':
       return ['agent', 'read', target(input.target), '--source', 'recent-unwrapped', '--lines', '60'];
     case 'agent_start': {
+      const workerKind = input.worker_kind ?? 'omp';
+      if (workerKind === 'claude') {
+        const claudeAgent = requiredString(input.claude_agent, 'claude_agent');
+        if (!CLAUDE_FIGMA_AGENTS.has(claudeAgent)) throw new Error('claude_agent must be an allowlisted Figma design-analysis role.');
+        return ['agent', 'start', agentName(input.name), '--kind', 'claude', '--pane', target(input.pane_id, 'pane_id'), '--', '--agent', claudeAgent, '--dangerously-skip-permissions', '--disallowedTools', 'Edit,Write,NotebookEdit,Bash'];
+      }
+      if (workerKind !== 'omp') throw new Error('worker_kind must be omp or claude.');
       const model = requiredString(input.model, 'model');
       if (!MODEL_PATTERN.test(model)) throw new Error('model must be a provider/model identifier.');
-      requireOpusEscalation(input, model);
       const thinking = requiredString(input.thinking, 'thinking');
       if (!THINKING_TIERS.has(thinking)) throw new Error('thinking must be low, medium, high, or xhigh.');
-      return [
+      const args = [
         'agent', 'start', agentName(input.name), '--kind', 'omp', '--pane', target(input.pane_id, 'pane_id'),
         '--', '--model', model, '--thinking', thinking,
       ];
+      if (input.reference_image !== undefined) args.push(`@${referenceImagePath(input.reference_image, workspace)}`);
+      return args;
     }
+    case 'agent_stop': return ['agent', 'send-keys', target(input.target), 'ctrl+c'];
     case 'agent_wait': {
       const args = ['agent', 'wait', target(input.target)];
       if (input.until !== undefined) {
@@ -113,6 +114,7 @@ function buildHerdrCommand(input, workspace) {
         '--cwd', workspacePath(input.cwd, workspace), '--no-focus',
       ];
     }
+    case 'pane_close': return ['pane', 'close', target(input.pane_id, 'pane_id')];
     default: throw new Error('Unsupported Herdr action.');
   }
 }

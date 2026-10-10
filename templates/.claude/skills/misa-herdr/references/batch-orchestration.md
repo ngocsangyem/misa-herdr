@@ -100,6 +100,12 @@ For a grounded worker, replace the free-form `EVIDENCE` field with `[E#]` IDs
 and a verified report path. A verification worker renders and verifies the shared
 ledger before Misa accepts the handoff; a pane transcript is never evidence.
 
+For code-changing work, the implementation handoff is never the acceptance record.
+Launch a separate read-only verifier after the writer settles. For visual-fidelity UI
+work, follow it with `visual-verifier` on the OMP `vision` route, with a reference image,
+exact viewport/state, and target screenshot artifact. Missing evidence is
+`BLOCKED`/`UNVERIFIED`, never a pass.
+
 The constrained launch does not add autonomous approval flags. This explicit scope is
 still mandatory and is not a substitute for the user's authority. Misa must
 still escalate business priority, owner, deadline, scope, release, money, external

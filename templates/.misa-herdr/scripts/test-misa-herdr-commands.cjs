@@ -20,33 +20,11 @@ assert.deepEqual(
   buildHerdrCommand({ action: 'agent_start', name: 'reviewer_1', pane_id: 'w1:p2', model: 'anthropic/claude-sonnet-5-5', thinking: 'high' }, workspace),
   ['agent', 'start', 'reviewer_1', '--kind', 'omp', '--pane', 'w1:p2', '--', '--model', 'anthropic/claude-sonnet-5-5', '--thinking', 'high'],
 );
-assert.deepEqual(
-  buildHerdrCommand({
-    action: 'agent_start', name: 'deep_rca', pane_id: 'w1:p3', model: 'anthropic/claude-opus-5-5', thinking: 'high',
-    escalation_basis: 'worker_evidence', escalation_evidence: 'reports/debugger.md: Sonnet worker exhausted the documented diagnosis path.',
-  }, workspace),
-  ['agent', 'start', 'deep_rca', '--kind', 'omp', '--pane', 'w1:p3', '--', '--model', 'anthropic/claude-opus-5-5', '--thinking', 'high'],
-);
+assert.deepEqual(buildHerdrCommand({ action: 'agent_start', name: 'everyday_opus', pane_id: 'w1:p3', model: 'anthropic/claude-opus-5-5', thinking: 'medium' }, workspace), ['agent', 'start', 'everyday_opus', '--kind', 'omp', '--pane', 'w1:p3', '--', '--model', 'anthropic/claude-opus-5-5', '--thinking', 'medium']);
+assert.deepEqual(buildHerdrCommand({ action: 'agent_start', name: 'figma_analyst', pane_id: 'w1:p5', worker_kind: 'claude', claude_agent: 'design-analyst' }, workspace), ['agent', 'start', 'figma_analyst', '--kind', 'claude', '--pane', 'w1:p5', '--', '--agent', 'design-analyst', '--dangerously-skip-permissions', '--disallowedTools', 'Edit,Write,NotebookEdit,Bash']);
 assert.throws(() => buildHerdrCommand({ action: 'pane_split', cwd: '/tmp' }, workspace), /inside the target workspace/);
 assert.throws(() => buildHerdrCommand({ action: 'agent_start', name: 'Invalid Name', pane_id: 'w1:p2', model: 'anthropic/x', thinking: 'high' }, workspace), /name must match/);
-assert.throws(
-  () => buildHerdrCommand({ action: 'agent_start', name: 'ungrounded_opus', pane_id: 'w1:p2', model: 'anthropic/claude-opus-5-5', thinking: 'high' }, workspace),
-  /escalation_basis is required/,
-);
-assert.throws(
-  () => buildHerdrCommand({
-    action: 'agent_start', name: 'invalid_opus', pane_id: 'w1:p2', model: 'anthropic/claude-opus-5-5', thinking: 'high',
-    escalation_basis: 'automatic', escalation_evidence: 'No valid provenance.',
-  }, workspace),
-  /escalation_basis must be worker_evidence, user_request, or user_approval/,
-);
-assert.throws(
-  () => buildHerdrCommand({
-    action: 'agent_start', name: 'blank_opus', pane_id: 'w1:p2', model: 'anthropic/claude-opus-5-5', thinking: 'high',
-    escalation_basis: 'user_approval', escalation_evidence: '   ',
-  }, workspace),
-  /escalation_evidence must not be blank/,
-);
+assert.throws(() => buildHerdrCommand({ action: 'agent_start', name: 'unsafe_claude', pane_id: 'w1:p2', worker_kind: 'claude', claude_agent: 'ui-ux-designer' }, workspace), /allowlisted Figma/);
 assert.throws(() => buildHerdrCommand({ action: 'shell', command: 'cat README.md' }, workspace), /Unsupported Herdr action/);
 assert.equal(isExpectedWaitTimeout({ action: 'agent_wait', timeout_ms: 300000 }, { code: 1, stderr: 'Timed out after 300000ms.' }), true);
 assert.equal(isExpectedWaitTimeout({ action: 'agent_wait', timeout_ms: 300000 }, { code: 1, stderr: 'target was not found' }), false);

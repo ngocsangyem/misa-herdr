@@ -75,6 +75,15 @@ a clear local change.
 
 ## Multi-agent control
 
+## Acceptance gates
+
+Completion is an evidence decision, not a writer status. For every code-changing
+delivery, Misa launches a separate read-only verifier that reruns the stated check.
+For UI visual-fidelity work, follow it with a read-only `visual-verifier` on the OMP
+`vision` route. The mission must name a reference-image artifact, viewport, state, and
+target screenshot path. Missing artifacts or failed capture are `BLOCKED` or
+`UNVERIFIED`; never pass by approximation.
+
 One writer owns one worktree. Parallelize read-only discovery freely when scopes are
 independent; parallel writers require separate worktrees and non-overlapping path
 ownership. Misa aggregates only compact reports, not chat transcripts.

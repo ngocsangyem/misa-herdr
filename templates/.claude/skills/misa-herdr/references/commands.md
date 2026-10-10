@@ -51,6 +51,13 @@ flags before it belong to Herdr. Run `herdr agent` to print the installed kind l
 
 ## Workspace OMP launch mode
 
+## OMP visual-verification route
+
+For UI fidelity work, start a read-only `visual-verifier` on the `vision` route and
+pass `reference_image` as an existing PNG, JPEG, or WebP inside the target workspace.
+The controller validates and attaches it to OMP. The worker captures the target UI at
+the specified viewport/state and returns mismatches or `BLOCKED`/`UNVERIFIED`.
+
 The current Herdr configuration uses a login `/bin/zsh` default shell. A newly split
 pane is therefore an available shell, not an already-running OMP process. Misa must
 first use `pane_split`, capture `.result.pane.pane_id`, then use `agent_start` with a

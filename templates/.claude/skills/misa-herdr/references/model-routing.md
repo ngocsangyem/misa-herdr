@@ -19,11 +19,8 @@ entitlement before a material migration.
    prompt; OMP model roles do not consume Claude's `--agent` role definitions.
    Exact IDs improve reproducibility; aliases are convenient but can resolve
    differently over time.
-5. Routine planning, debugging, and implementation use `task` / Sonnet 5.5. An Opus
-   5.5 launch requires `worker_evidence`, `user_request`, or `user_approval`, plus a
-   concise supporting reason. Pass that provenance as `escalation_basis` and
-   `escalation_evidence` to `agent_start`; the constrained tool rejects an ungrounded
-   Opus launch.
+5. Routine planning, debugging, and implementation use `task` / Opus 5.5. Choose a
+   higher-thinking Opus route only when the work needs it; always record the route.
 6. Record `name`, business role, OMP model role, provider, effective model, reasoning tier, objective,
    dependency, and expected evidence in the work ledger before launch. A missing role
    or model is a launch blocker, not an invitation to fall back to Fable.
@@ -42,10 +39,10 @@ for choosing the Herdr worker's main session model.
 
 | OMP model role | Effective model | Thinking | Use |
 | --- | --- | --- | --- |
-| `default`, `task` | `anthropic/claude-sonnet-5-5` | `medium` | well-scoped everyday implementation and delegated work |
+| `default`, `task` | `anthropic/claude-opus-5-5` | `medium` | well-scoped everyday implementation and delegated work |
 | `smol` | `anthropic/claude-haiku-4-5` | `low` | bounded discovery, extraction, triage, simple test/log analysis |
-| `slow` | `anthropic/claude-opus-5-5` | `high` | exception route for deep RCA or difficult implementation after the Opus escalation gate |
-| `plan` | `anthropic/claude-opus-5-5` | `high` | exception route for architecture or high-stakes planning after the Opus escalation gate |
+| `slow` | `anthropic/claude-opus-5-5` | `high` | deep RCA or difficult implementation |
+| `plan` | `anthropic/claude-opus-5-5` | `high` | architecture or high-stakes planning |
 | `advisor` | `anthropic/claude-fable-5-1` | `medium` | hard advisory judgment; keeps the limited Codex allotment for other work |
 | `review` | `openai-codex/gpt-6-luna` | `high` | normal code review of Anthropic-authored work |
 | `vision`, `designer` | `google-antigravity/gemini-3.8-flash` | `high` | image/UI inspection or design work |
@@ -71,6 +68,7 @@ matches; the task can justify a different provider, but never a generic Fable fa
 | Focused code review | `code-reviewer` | `review` | Security, migration, or public-contract risk needs independent review |
 | Product or implementation planning | `planner` | `task` | A verified worker handoff shows `task` is insufficient, or the user requests/approves Opus |
 | Design analysis or UI/UX work | `design-analyst` or `ui-ux-designer` | `designer` | High-value visual or product decision needs stronger review |
+| Post-implementation UI fidelity check | `visual-verifier` | `vision` | Source image, target screenshot, viewport, or state is unavailable |
 | Git-only handoff | `git-manager` | `commit` | Pin `openai-codex/gpt-6-luna` at `low`; block on any identity, expected-login authentication, release, or remote-state uncertainty |
 | High-stakes advisory judgment | `kongming` or `advisor` | `advisor` | Never use as a general implementation shortcut |
 

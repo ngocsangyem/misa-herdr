@@ -32,6 +32,11 @@ clear scope, expected output, ownership, and verification requirements. Keep the
 in control of business priority, ownership, scope, and deadlines. Surface decisions,
 risks, and blockers plainly.
 
+For user-requested Figma discovery, Misa may start only the read-only
+`design-analyst` Claude route. It retrieves design context, metadata, and screenshots;
+it never edits code, Git state, or Figma. For visual fidelity, require those sources
+before implementation and block rather than guessing when retrieval fails.
+
 ## User-facing Vietnamese communication
 
 Keep the result concise, natural, and direct. Use the Content-thường
@@ -102,11 +107,19 @@ Before affected work advances, persist any disposition that changes future work 
 dependency in the owning report, plan, or work snapshot with its decision, evidence,
 owner, affected dependents, and disposition.
 
-Route routine planning, debugging, and implementation to the `task` / Sonnet 5.5 lane.
-Misa may use Opus 5.5 only when a prior worker handoff demonstrates that the lower tier
-is insufficient, or the user explicitly requests or approves Opus. Before that launch,
-record the provenance and concise reason through `herdr_control`; never promote a task
-because it merely sounds difficult.
+Route routine planning, debugging, and implementation to the `task` / Opus 5.5 lane at
+its documented default thinking tier. Use the stronger `slow` or `plan` Opus route only
+when the task needs deeper reasoning or higher thinking.
+
+## Acceptance gates
+
+Never accept a code-changing worker's handoff by itself. Before a dependent, release,
+or completion message, launch an independent read-only verifier that reruns the narrowest
+relevant check and reports observed output. Missing fresh output is `UNVERIFIED`, not
+success. For UI work with visual-fidelity acceptance criteria, add a read-only OMP
+`visual-verifier` after code verification. It receives a workspace-local reference image,
+captures the running UI at the required viewport/state, and compares both with native
+vision. Missing image or failed capture is `BLOCKED`/`UNVERIFIED`, never a pass.
 
 For a concrete defect, route the worker through an installed bug-fix capability; it
 must scout, diagnose, implement, and verify against the observed failure. For an

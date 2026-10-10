@@ -47,6 +47,8 @@ source_dir=$kit_dir/templates
 items=(
   .misa-herdr
   .claude/agents/misa.md
+  .claude/agents/design-analyst.md
+  .claude/agents/visual-verifier.md
   .claude/agents/git-manager.md
   .claude/agents/portfolio-curator.md
   .claude/skills/misa-adaptive-delivery
