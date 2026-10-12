@@ -16,22 +16,30 @@ request. Do not rely on a terminal's visual Done badge or a prior transcript rea
 For a saved SSH machine, record its profile ID or label in that row and apply the
 same `--machine` prefix to every roster, get, read, wait, and prompt command.
 
-For a live wave, wait for a meaningful deadline rather than polling every minute. The
-controller allows a single `agent_wait` of up to 300,000 ms: use a shorter bounded
-wait for routine work and five minutes for a longer active phase. When that explicit
-wait expires, `herdr_control` returns a normal monitoring result rather than an MCP
-failure. It does not mean the work failed or the prompt was absent. Do not resend the
-mission after a timeout. Refresh the roster only after that wait, a
-prompt result, a dependency checkpoint, or resumed coordination. On `done`, process
-that worker through the decision loop before advancing dependents. On `blocked`,
-surface the question to the user; Misa cannot inspect or answer a raw approval UI.
+For a live wave with one direct dependency, call `agent_wait` without `timeout_ms`
+or `until`. Herdr then waits until the worker reaches `done`, `idle`, or `blocked`,
+which keeps Misa's controller turn open without polling. Do not wait only for `done`:
+Herdr can change a completion from `done` to `idle` when it is seen, and both states
+mean ready for input. On return, process that worker through
+the decision loop before advancing dependents. On `blocked`, surface the question to
+the user; Misa cannot inspect or answer a raw approval UI.
+
+Issue that unbounded wait once per dependency. If Claude Code backgrounds the call, do
+not issue repeated or parallel `agent_wait` calls for the same worker: at the next
+checkpoint call `agent_get`, and when it reports `done` or `idle`, read `agent_handoff`
+and process it. A delivered background result is processed the same way, once.
+
+Use bounded waits only for independent workers, intentional progress checkpoints, or
+when Misa must return control to the user. The controller allows a single explicit
+timeout of up to 300,000 ms. When that wait expires, `herdr_control` returns a normal
+monitoring result rather than an MCP failure. It does not mean the work failed or the
+prompt was absent. Do not resend the mission after a timeout. Refresh the roster only
+after that wait, a prompt result, a dependency checkpoint, or resumed coordination.
 Keep `unknown` out of the completion path and recheck it at the next checkpoint.
 
 Herdr 0.9.3 treats `idle` and `done` as ready for input, with server seen-state
-distinguishing them. Do not wait only for `done`: a completion can change to `idle`
-when seen, so the controller maps either ready-state request to both states. A CLI
-read does not mark a target seen, and client Done badges can differ. Treat a lost
-output stream or missing final close record as transport
+distinguishing them. A CLI read does not mark a target seen, and client Done badges
+can differ. Treat a lost output stream or missing final close record as transport
 uncertainty: rerun `agent list` and `agent get` before deciding the worker failed or
 completed.
 
@@ -89,13 +97,20 @@ unverified claims.
 
 ## Resource cleanup
 
-The constrained Misa tool cannot close panes. After report, verification, decision,
-and memory steps are complete, leave cleanup to the user or a separately authorised
-operations worker.
+After report, verification, decision, and memory steps are complete, Misa may clean
+up only the pane it created in the current controller session. For a working worker,
+send `agent_stop`; then wait for that same named agent with `until: idle` or
+`until: done`, and close only its recorded pane with `pane_close`.
 
-Do not close a pane running a watcher/server, a user process, or a task with pending
-follow-up. Do not turn a `working` state into cleanup: diagnose it first. After a
-close, retain only the Markdown handoff and evidence pointers.
+Do not close a user pane, an earlier-session pane, a watcher/server, a blocked or
+unknown worker, or a task with pending follow-up. The constrained tool refuses those
+cases. After a close, retain only the Markdown handoff and evidence pointers.
+
+Never leave an orphan pane. If `agent_start` fails in a pane Misa split, the pane has
+no settled agent, so `pane_close` refuses it. Start OMP in that pane with `agent_start`
+(after `agent_not_ready`, keep the name and only wait), wait for `idle`, then close it
+with `pane_close`. A pane that still cannot close is reported as `operations cleanup
+needed`.
 
 ## Notification recommendation
 

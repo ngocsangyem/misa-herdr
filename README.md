@@ -17,7 +17,8 @@ role is only the default example.
   `identities.md`, and `.organization/` authority/routing templates.
 
 The controller is intentionally limited to listing, reading, waiting for,
-prompting, and starting registered Herdr agents, plus splitting a worker pane. It
+prompting, starting, and stopping its own registered Herdr agents, plus splitting a
+worker pane and closing a pane it created once its agent is `idle` or `done`. It
 does not execute arbitrary shell commands, read files, write files, or create
 worktrees. Git owns branches and worktrees; Herdr owns panes and agent lifecycle.
 
@@ -37,17 +38,23 @@ The policy is designed for a few recurring failures in multi-agent work:
   depends on it.
 
 The controller performs a short blind-spot intake before routing a request. It separates the
-outcome, non-negotiable constraints, revisable approaches, and unknowns. It does not
-spawn a critic for every prompt. A read-only scout is used only when an unknown needs
-evidence and could change the route; a user question is reserved for a user-owned
-decision.
+outcome, non-negotiable constraints, revisable approaches, and unknowns, and every
+worker mission carries those four fields plus the loop
+`UNDERSTAND -> ACT -> INSPECT -> CLARIFY only at a decision trigger -> ADJUST -> ACT`.
+It does not spawn a critic for every prompt. A read-only scout is used only when an
+unknown needs evidence and could change the route; a user question is reserved for a
+user-owned decision, including which source wins in a merge or reconciliation.
 
 When a worker has evidence that a current approach no longer serves the outcome, it
 can send a `DESIGN_CHANGE_REQUEST`. The request names the premise, evidence, impact,
 options, and requested disposition. The controller either keeps the approach with a reason,
 permits a local adaptation, routes the work to the owner, or asks the user. The worker
-does not edit another owner’s scope. If the decision changes future work, it is written
-to the task’s report, plan, or work snapshot before affected work continues.
+does not edit another owner’s scope. The disposition of every writer-raised question or
+`DESIGN_CHANGE_REQUEST` is written to the task report before `git-manager` or a
+dependent worker is routed; if it touches a rule the user set in the session, the user
+confirms before any external write such as a push or PR.
+A user request to skip lint or tests lowers that check, never the read-only verifier
+gate.
 
 ```mermaid
 flowchart TD
@@ -58,13 +65,13 @@ flowchart TD
     E --> B
     C -->|Needs user decision| F[Ask user]
     F --> B
-    D --> G{Evidence challenges current approach?}
-    G -->|No| H[Verify and hand off]
-    G -->|Yes| I[DESIGN_CHANGE_REQUEST]
-    I --> J[Controller records disposition]
-    J --> K{Decision changes future work?}
-    K -->|Yes| L[Update report, plan, or work snapshot]
-    L --> M[Route affected owner or dependent work]
+    D --> G{Worker raises question or DESIGN_CHANGE_REQUEST?}
+    G -->|No| H[Read-only verify and hand off]
+    G -->|Yes| I[Controller decides disposition]
+    I --> J[Record disposition in task report]
+    J --> K{Touches a session rule and needs an external write?}
+    K -->|Yes| L[Ask user before push or PR]
+    L --> M[Route git-manager or dependent work]
     K -->|No| M
 ```
 
@@ -87,7 +94,7 @@ Current baseline:
 | Controller example | `anthropic/claude-fable-5-1`, `high` |
 | Routine plan/debug/implementation | Opus 5.5, normally `medium` |
 | Review of Anthropic-authored work | Codex GPT-6 Luna, `high` |
-| Independent review of Codex-authored work | Sonnet 5.5, `high` |
+| Independent review of Codex-authored work | Opus 5.5, `high` |
 | Deep RCA/high-stakes plan | Opus 5.5, normally `high` |
 | Git/GitHub write | Codex GPT-6 Luna, `low`, through `git-manager` only |
 
@@ -104,6 +111,12 @@ When changing routing, update the matching controller and worker policy together
 Then install into a temporary workspace and run the two Node checks below before
 reinstalling into a real project. Do not edit only the README: it is navigation;
 the template files above are the active policy after installation.
+
+Misa's rules are maintained in the source workspace first and mirrored into
+`templates/` in the same task. After a change, `diff -r` between the workspace copies
+and their template counterparts must show only the documented identity/path
+placeholders: workspace name, expected GitHub login, workspace-root wording, skill
+catalog location, and kit-source path.
 
 ## Before installation
 

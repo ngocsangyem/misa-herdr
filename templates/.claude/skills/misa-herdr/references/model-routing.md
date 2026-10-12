@@ -19,11 +19,13 @@ entitlement before a material migration.
    prompt; OMP model roles do not consume Claude's `--agent` role definitions.
    Exact IDs improve reproducibility; aliases are convenient but can resolve
    differently over time.
-5. Routine planning, debugging, and implementation use `task` / Opus 5.5. Choose a
-   higher-thinking Opus route only when the work needs it; always record the route.
+5. Routine planning, debugging, and implementation use `task` / Opus 5.5. Choose the
+   documented `medium` thinking tier by default; use `slow` or `plan` only when the
+   task needs their higher thinking tier. Opus launches do not require escalation
+   metadata.
 6. Record `name`, business role, OMP model role, provider, effective model, reasoning tier, objective,
    dependency, and expected evidence in the work ledger before launch. A missing role
-   or model is a launch blocker, not an invitation to fall back to Fable.
+   or model is a launch blocker, not an invitation to substitute a controller model.
 7. Record only a meaningful routing decision in the handoff: task, business role, OMP model role, effective model, reason,
    and observed outcome. Do not load or store a full catalog/transcript as memory.
 
@@ -41,34 +43,33 @@ for choosing the Herdr worker's main session model.
 | --- | --- | --- | --- |
 | `default`, `task` | `anthropic/claude-opus-5-5` | `medium` | well-scoped everyday implementation and delegated work |
 | `smol` | `anthropic/claude-haiku-4-5` | `low` | bounded discovery, extraction, triage, simple test/log analysis |
-| `slow` | `anthropic/claude-opus-5-5` | `high` | deep RCA or difficult implementation |
-| `plan` | `anthropic/claude-opus-5-5` | `high` | architecture or high-stakes planning |
-| `advisor` | `anthropic/claude-fable-5-1` | `medium` | hard advisory judgment; keeps the limited Codex allotment for other work |
+| `slow` | `anthropic/claude-opus-5-5` | `high` | deep RCA or difficult implementation requiring higher thinking |
+| `plan` | `anthropic/claude-opus-5-5` | `high` | architecture or high-stakes planning requiring higher thinking |
+| `advisor` | `anthropic/claude-fable-5-1` | `medium` | hard advisory judgment; also the Misa controller model |
 | `review` | `openai-codex/gpt-6-luna` | `high` | normal code review of Anthropic-authored work |
 | `vision`, `designer` | `google-antigravity/gemini-3.8-flash` | `high` | image/UI inspection or design work |
 | `commit` | `openai-codex/gpt-6-luna` | `low` | Git or GitHub write only: must use `git-manager`, authenticate as the mission's expected login, and never use a Claude agent |
 | `tiny` | `google-antigravity/gemini-3.8-flash` | `low` | cheap, independently verifiable microtasks |
 
 For an independent review of Codex-authored work, do not use the normal `review`
-route. Start the independent OMP reviewer on `anthropic/claude-sonnet-5-5` at `high`.
-Escalate to `anthropic/claude-opus-5-5` only with a user request, user approval, or a
-verified insufficiency handoff, as required by the launch gate. The standard `review`
-route uses GPT-6 Luna at `high`; the cross-provider exception preserves independence
-without bypassing escalation policy.
+route. Start the independent OMP reviewer on `anthropic/claude-opus-5-5` at `high`.
+The standard `review` route uses GPT-6 Luna at `high`; the cross-provider exception
+preserves provider independence.
 
 ## Business-role defaults
 
 Read the candidate role's frontmatter before launch. Use this table when its task
-matches; the task can justify a different provider, but never a generic Fable fallback.
+matches; the task can justify a different provider, but never an undefined generic
+Fable fallback.
 
 | Task | Default business role | Default OMP model role | Escalate when |
 | --- | --- | --- | --- |
 | File inventory, bounded extraction, simple test/log classification | `explore` or `tester` | `smol` | Findings become ambiguous or cross-module |
-| Research, documentation, routine debugging, routine implementation | `researcher`, `docs-manager`, `debugger`, or `fullstack-developer` | `task` | A verified worker handoff shows `task` is insufficient, or the user requests/approves Opus |
+| Research, documentation, routine debugging, routine implementation | `researcher`, `docs-manager`, `debugger`, or `fullstack-developer` | `task` | Higher thinking or a specialist route is needed |
 | Focused code review | `code-reviewer` | `review` | Security, migration, or public-contract risk needs independent review |
-| Product or implementation planning | `planner` | `task` | A verified worker handoff shows `task` is insufficient, or the user requests/approves Opus |
+| Product or implementation planning | `planner` | `task` | Higher thinking or a specialist route is needed |
 | Design analysis or UI/UX work | `design-analyst` or `ui-ux-designer` | `designer` | High-value visual or product decision needs stronger review |
-| Post-implementation UI fidelity check | `visual-verifier` | `vision` | Source image, target screenshot, viewport, or state is unavailable |
+| Post-implementation UI fidelity check | `visual-verifier` | `vision` | Either source image, target screenshot, viewport, or state is unavailable |
 | Git-only handoff | `git-manager` | `commit` | Pin `openai-codex/gpt-6-luna` at `low`; block on any identity, expected-login authentication, release, or remote-state uncertainty |
 | High-stakes advisory judgment | `kongming` or `advisor` | `advisor` | Never use as a general implementation shortcut |
 
@@ -90,10 +91,10 @@ representative evaluation shows a quality benefit.
 
 | Claude API ID | Claude Code shorthand | Official position | Best routing use | Trade-off |
 | --- | --- | --- | --- | --- |
-| `claude-opus-5-5` | `opus` | Claude's strongest Opus model for long-running agents and complex work | Plan design, architecture, deep RCA, and difficult implementation judgment | More costly than Sonnet; use where sustained judgment is needed |
-| `claude-fable-5-1` | `fable` | Most capable widely released Claude for demanding reasoning and long-horizon agentic work | Misa's coordinator role and high-stakes advice only | Keep out of planning and implementation routes |
+| `claude-opus-5-5` | `opus` | Claude's strongest Opus model for long-running agents and complex work | Default worker for routine implementation, bug fixes, planning, and documentation | More costly than Sonnet; use the documented thinking tier deliberately |
+| `claude-fable-5-1` | `fable` | Most capable widely released Claude for demanding reasoning and long-horizon agentic work | Misa coordination and high-stakes advice | Keep worker scopes explicit; it is not a generic implementation fallback |
 | `claude-opus-5` | `opus` | Previous Opus release | Existing pinned work only | Do not select for new workers when Opus 5.5 is entitled and available |
-| `claude-sonnet-5-5` | `sonnet` | Fast, capable model for well-scoped everyday tasks | Default worker for routine implementation, bug fixes, and documentation | Escalate complex, open-ended, or high-stakes work to Opus 5.5 |
+| `claude-sonnet-5-5` | `sonnet` | Fast, capable model for well-scoped tasks | Explicitly selected lower-cost worker route | Not the default route for Misa-managed everyday work |
 | `claude-haiku-4-5-20251001` | no shorthand documented by this CLI | Fastest model with near-frontier intelligence | Bounded discovery, classification, simple testing, high-volume tasks | 200k context and 64k max output; no adaptive thinking |
 
 Fable 5.1, Opus 5.5, and Sonnet 5.5 have 1M context and 128k max output with adaptive
@@ -106,13 +107,13 @@ and command so an alias change cannot silently alter a worker's route.
 | Work shape | Default OMP model role | Escalation / composition |
 | --- | --- | --- |
 | Repetitive discovery, inventory, focused extraction, test-log classification | `smol` | Escalate to `task` when ambiguity or cross-file reasoning appears |
-| Routine implementation, debugging, test repair, codebase exploration | `task` | Use `slow` only when evidence shows deep reasoning is needed |
+| Routine implementation, debugging, test repair, codebase exploration | `task` | Use `slow` only when higher thinking is needed |
 | Contained planning with `ak:plan` | `task` | Use the `planner` business role when scope, repository, and acceptance criteria are bounded |
-| Hard planning with `ak:plan` | `task` | Promote to `plan` only with a verified insufficiency handoff or explicit user request/approval |
-| Decision-gated implementation from an accepted `ak:plan` with `ak:cook` | `task` | Upgrade to `slow` only when the accepted plan's assumptions fail during delivery |
+| Hard planning with `ak:plan` | `task` | Promote to `plan` when higher thinking is needed |
+| Decision-gated implementation from an accepted `ak:plan` with `ak:cook` | `task` | Upgrade to `slow` when the accepted plan needs deeper implementation reasoning |
 | Bounded adaptive implementation | `task` | Start with scout/domain skill/test; pause only at an authority-changing discovery |
 | Implementation from an accepted `ak:plan` with unresolved hard decisions | `slow` | Escalate to `advisor` only for a specific unresolved decision, not as a general builder |
-| Complex multi-step implementation, cross-repo change, deep RCA | `task` | Promote to `slow` only with a verified insufficiency handoff or explicit user request/approval; split independent subproblems first |
+| Complex multi-step implementation, cross-repo change, deep RCA | `task` | Promote to `slow` when deeper reasoning is needed; split independent subproblems first |
 | Architecture, hard trade-off, security review, migration risk, high-value UI | `plan`, `advisor`, or `review` | Pin the review worker to the other provider when independent judgment justifies cost/time |
 
 Use one primary implementation worker by default. Use cross-provider review only for
@@ -128,8 +129,8 @@ request/approval; a high-capability planner is not a reason to escalate the
 implementation worker.
 
 If a worker fails from missing context, unclear scope, or blocked tools, correct that
-constraint before escalating the model. Escalate capacity only when grounded evidence
-shows the lower tier is insufficient.
+constraint before increasing thinking or changing the model. Model capacity never
+extends the worker's authority.
 
 Official sources:
 

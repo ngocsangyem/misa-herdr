@@ -28,6 +28,11 @@ those routing decisions. Ask the user only if the missing answer is user-owned. 
 ordinary implementation choice belongs to the assigned worker; an unknown that does
 not change routing is not an intake gate.
 
+Source precedence is user-owned. When a merge, resolution, or reconciliation task has
+an unknown about which source wins a conflict (branch, spec, or contract), ask the user
+for the order before launching the writer; do not infer it from branch age, naming, or
+an earlier brief. The answer becomes a non-negotiable constraint in the mission.
+
 Report an intake finding only when it changes the selected lane, requires a user
 decision, or prevents execution. Do not turn the check into a generic critique or a
 mandatory planning phase.
@@ -45,7 +50,8 @@ review, model, or approval gate.
 
 ## Adaptive worker loop
 
-Give an adaptive worker this sequence:
+Every worker mission states the four intake fields above and names this loop verbatim
+with its CLARIFY triggers (see the minimum mission in the reference below):
 
 ```text
 UNDERSTAND -> ACT -> INSPECT -> CLARIFY only at a decision trigger -> ADJUST -> ACT
@@ -64,8 +70,9 @@ handoffs; source files, terminal output, and test results remain worker-owned.
   confirm or refute it.
 - **Adjust:** incorporate the observed result. A failed test or dependent call site
   is ordinary implementation evidence, not automatic escalation.
-- **Clarify:** stop before changing any user-owned decision in the table above. Tell
-  the user the observed evidence, the affected behavior, and the concrete options.
+- **Clarify:** stop before changing any user-owned decision in the table above, a
+  priority, owner, or deadline, or an unsettled source precedence. Tell the user the
+  observed evidence, the affected behavior, and the concrete options.
 
 Use AgentKit deliberately: `ak:scout` for bounded discovery, the applicable domain
 skill for implementation, `ak:test` for focused verification, and `ak:fix` for a
@@ -73,16 +80,47 @@ concrete defect. Use `ak:plan` and `ak:cook` only after the decision-gated lane 
 produced an accepted plan. Do not invoke Cook merely to create a ceremonial plan for
 a clear local change.
 
-## Multi-agent control
+## Continue the controller route
+
+After each worker handoff, Misa—not the user—chooses the next technical route. Read
+the compact handoff through `misa-herdr`, obtain the required verification handoff,
+and then accept the outcome, send a focused follow-up, or launch the next bounded
+worker. Do not turn a worker's proposed next step into a user question when it stays
+inside the accepted outcome and authority boundary.
+
+Misa may stop and ask the user only at a decision-gated trigger: product behavior,
+public/shared contract, architecture, security/privacy posture, data migration,
+release or external state, money, destructive scope, priority, owner, or deadline.
+A worker completion, a monitoring timeout, an ordinary implementation choice, or a
+failed focused check is not such a trigger. Before ending an active delivery turn,
+Misa accounts for every worker in its roster and records the disposition of each
+settled worker.
 
 ## Acceptance gates
 
 Completion is an evidence decision, not a writer status. For every code-changing
-delivery, Misa launches a separate read-only verifier that reruns the stated check.
-For UI visual-fidelity work, follow it with a read-only `visual-verifier` on the OMP
-`vision` route. The mission must name a reference-image artifact, viewport, state, and
-target screenshot path. Missing artifacts or failed capture are `BLOCKED` or
-`UNVERIFIED`; never pass by approximation.
+delivery, Misa launches a separate read-only verifier after the writer settles. The
+verifier reruns the narrowest relevant check and compares the observed result with the
+claimed outcome. Misa must not start a dependent, ship, or report success from the
+writer's handoff alone.
+
+A user instruction to skip lint, tests, or another check lowers that check, never the
+gate. Misa still launches the read-only verifier; it compares the writer's result with
+the stated source of truth—for example `git diff <main-branch> -- <files>` for a merge
+or reconciliation—and reports matches and divergences. No `git-manager` commit or push
+starts until that verifier's handoff is accepted.
+
+For UI work whose acceptance criterion includes visual fidelity, the verifier lane has
+two stages: ordinary code verification, then a read-only visual-verification worker on
+the OMP `vision` model route. Its mission names an existing reference-image artifact,
+the required viewport and UI state, and the expected screenshot output path. It captures
+the implementation image, compares both images with native vision, and separates visible
+facts, uncertainty, and inference. Missing reference image, missing runnable UI, or a
+failed screenshot makes the result `BLOCKED` or `UNVERIFIED`; it never becomes a pass by
+approximation. Route only its actionable mismatch list back to the writer, then rerun
+the same gate after repair.
+
+## Multi-agent control
 
 One writer owns one worktree. Parallelize read-only discovery freely when scopes are
 independent; parallel writers require separate worktrees and non-overlapping path

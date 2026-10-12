@@ -12,22 +12,29 @@ The tool itself enforces the Herdr-pane environment boundary.
 | Roster | `agent_list` |
 | One worker's lifecycle metadata | `agent_get` with `target` |
 | Compact final handoff only | `agent_handoff` with `target` |
-| Start OMP in an available worker shell | `agent_start` with `name`, `pane_id`, `model`, and `thinking`; Opus 5.5 also requires `escalation_basis` and `escalation_evidence` |
-| Wait for a settled worker | `agent_wait` with `target` and optional `timeout_ms`; use `until: blocked` only when that exact state is required |
+| Start OMP in an available worker shell | `agent_start` with `name`, `pane_id`, `model`, and `thinking` |
+| Start Figma design analysis in Claude Code | `agent_start` with `worker_kind: "claude"`, `claude_agent: "design-analyst"`, `name`, and `pane_id` |
+| Ask a Misa-owned worker to stop gracefully | `agent_stop` with its live agent `target` |
+| Wait for a settled worker | `agent_wait` with `target`, optional `until` and `timeout_ms` |
 | Send a bounded worker mission or follow-up | `agent_prompt` with `target`, `message`, optional `wait` and `timeout_ms` |
 | Create an available worker shell | `pane_split` with `cwd`, optional `direction` |
+| Close a settled Misa-owned worker pane | `pane_close` with `pane_id` |
 
 No action accepts raw shell, CLI flags, arbitrary process arguments, file paths outside
-the target workspace, or a pane-close request.
+the target workspace, or a close of a pane Misa did not create and settle.
 
 ## Misa session identity
 
-Start the controlling Chief-of-Staff session as Claude Code with `claude --agent misa`
-(or the installed `scripts/misa-controller`). `herdr_control` is a Claude Code project
-MCP tool; OMP is only the worker runtime. Start Misa from a Herdr-managed pane so the
-tool inherits session context. If it is absent, restart the Claude Code session and
-approve/reconnect the `misa-herdr` server in `/mcp`; do not convert Misa into OMP or
-bypass the tool with raw Bash.
+Project settings select the `misa` agent role. Start the controlling Chief-of-Staff
+session with `claude --agent misa` (or `scripts/misa-controller`, which invokes that
+command) from a Herdr-managed pane. `herdr_control` is a Claude Code project MCP tool;
+OMP is only the worker runtime. An OMP worker receives its business-role boundary in
+its first mission prompt and must never infer it from the active model.
+
+If Misa reports `No such tool available: herdr_control`, the Claude Code project MCP
+server was not loaded or has not been approved. End and restart that Claude Code Misa
+session, then approve or reconnect `misa-herdr` in `/mcp`. Do not convert Misa into an
+OMP session, request Bash, or bypass the constrained tool with a raw Herdr command.
 
 ## ID and checkout rules
 
@@ -51,34 +58,52 @@ flags before it belong to Herdr. Run `herdr agent` to print the installed kind l
 
 ## Workspace OMP launch mode
 
-## OMP visual-verification route
-
-For UI fidelity work, start a read-only `visual-verifier` on the `vision` route and
-pass `reference_image` as an existing PNG, JPEG, or WebP inside the target workspace.
-The controller validates and attaches it to OMP. The worker captures the target UI at
-the specified viewport/state and returns mismatches or `BLOCKED`/`UNVERIFIED`.
-
 The current Herdr configuration uses a login `/bin/zsh` default shell. A newly split
 pane is therefore an available shell, not an already-running OMP process. Misa must
 first use `pane_split`, capture `.result.pane.pane_id`, then use `agent_start` with a
 unique lowercase name, the returned pane ID, and the selected OMP model and thinking
 tier. The tool emits only the supported native OMP flags after Herdr's `--` separator.
 
-## Opus 5.5 escalation gate
+## Everyday Opus 5.5 route
 
-Routine planning, debugging, and implementation use the `task` / Sonnet 5.5 route.
-For `anthropic/claude-opus-5-5`, `agent_start` requires both:
-
-- `escalation_basis`: `worker_evidence`, `user_request`, or `user_approval`.
-- `escalation_evidence`: a concise report reference and insufficiency finding, or the
-  user's request/approval being honored.
-
-The constrained tool rejects an Opus launch without valid metadata. This validates
-provenance and completeness, not the truth of the cited report; Misa must rely on the
-verified worker handoff before selecting `worker_evidence`.
+Routine planning, debugging, and implementation use the `task` / Opus 5.5 route.
+Pass `anthropic/claude-opus-5-5` and the route's documented thinking tier to
+`agent_start`; no Opus escalation metadata is required. Select the `slow` or `plan`
+route only when the task needs their higher thinking tier, and still record the
+business role, effective model, reasoning tier, and expected evidence in the launch
+ledger.
 
 `agent_start` waits for Herdr to recognize OMP. If it returns `agent_not_ready`, retain
 the requested name, wait for `idle`, and do not start a second process in that pane.
+
+## Claude Code Figma analysis route
+
+For a user-requested Figma discovery task, Misa may start only the allowlisted
+read-only `design-analyst` via `worker_kind: "claude"` and
+`claude_agent: "design-analyst"`. The controller launches Herdr's `claude` kind with
+`claude --agent design-analyst --dangerously-skip-permissions`; the fixed launch shape
+prevents arbitrary Claude arguments and relies on the user's global Claude Code Figma
+MCP configuration.
+
+This route is for retrieving node context, metadata, and screenshots. When visual
+fidelity is required, the mission must include the user's Figma file or selection URL
+and require all three sources: `get_design_context` and `get_metadata` for exact
+structured values, plus `get_screenshot` for visual evidence. The resulting digest
+names the source URL/node, observed visual facts, exact copy, states, variants, unknowns,
+and a compact implementation checklist. Misa sends that digest to the subsequent OMP
+implementation worker instead of asking it to infer the design from the original prompt.
+If Figma cannot be retrieved, visual-fidelity work is blocked rather than guessed. This
+route cannot be used for code edits, commits, pushes, PR writes, or Figma mutations.
+
+## OMP visual-verification route
+
+For post-implementation UI fidelity work, Misa starts an OMP `visual-verifier` on the
+`vision` model route and passes `reference_image` as an existing PNG, JPEG, or WebP
+inside the assigned workspace. The controller validates the path and supplies it to OMP
+as an image attachment at launch. The worker captures the running UI at the mission's
+specified viewport and state, then compares the source and target images with native
+vision. It is read-only: its handoff is a mismatch list or `BLOCKED`/`UNVERIFIED`, not a
+code change or a generic design opinion.
 
 ## Autonomous worker launch mode
 
@@ -147,8 +172,17 @@ Use ANSI formatting only when terminal styling itself is evidence.
 ## Resolve, cancel, and close
 
 Use `agent_prompt` for a focused clarification and `agent_wait` with `until: blocked`
-only for a state-specific wait. The constrained controller does not expose
-`agent explain`, raw key input, or pane close.
+only for a state-specific wait. To clean up a worker, use this exact guarded sequence:
+
+1. For a working worker, call `agent_stop` to send `ctrl+c` only to that Misa-owned
+   agent. This is a graceful interruption, not a forced kill.
+2. Call `agent_wait` with the same agent name and `until: idle` or `until: done`.
+3. Call `pane_close` with its original returned `pane_id`.
+
+The controller records panes returned by its own `pane_split` actions and agents
+started in them. It refuses a close unless that exact pane remains controller-owned and
+the matching agent was confirmed `idle` or `done` in the current session. It never
+offers `agent explain`, raw key input, forced close, raw Bash, or direct `omp` invocation.
 
 Do not request cancellation or pane cleanup merely because a worker is slow. Escalate
 the decision to the user or a separately authorised operations worker.

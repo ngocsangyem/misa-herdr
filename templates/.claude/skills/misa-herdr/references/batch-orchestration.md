@@ -11,11 +11,10 @@ dependency, expected evidence, verification, terminal disposition (`keep` or
 `operations cleanup needed`), business role, OMP model role, provider, effective
 model, and reasoning tier.
 The objective, ownership, verification, and escalation boundary must be clear before
-launch; implementation hypotheses may remain open for the worker to test. For work
-with architecture, lifecycle, shared-contract, or vertical dependencies, record the
-user goal, non-negotiable constraints with their source, current revisable approach,
-and known unknowns separately. Misa's controller model is never a substitute for the
-worker's selected model.
+launch; implementation hypotheses may remain open for the worker to test. For every
+worker, record the user goal, non-negotiable constraints with their source, current
+revisable approach, and known unknowns separately. Misa's controller model is never a
+substitute for the worker's selected model.
 
 Group work into waves:
 
@@ -74,17 +73,18 @@ Scope: modify only <owned paths>; do not change priorities, release state, secre
 or unrelated files. Stop and report a blocker if the objective needs work outside
 this boundary.
 
-For a design-sensitive task, distinguish the user goal and non-negotiable constraints
-from the current approach. The current approach is revisable unless explicitly named
-as a constraint. If evidence challenges it and resolution needs another owner's scope
-or a decision, report DESIGN_CHANGE_REQUEST with premise, evidence, impact, bounded
-options, and requested disposition; do not apply an unowned change or bury it in a
-workaround.
+Outcome: <result>. Non-negotiable constraints: <limits with source>.
+Current approach (revisable): <design in use>. Unknowns: <premises to test, or none known>.
 
-Memory: query MemPalace only when Misa supplies a project wing and prior decisions,
-handoffs, or architecture materially matter. Treat results as leads; verify them
-against source, Git, ticket, or portfolio evidence. Do not store transcripts, secrets,
-customer data, or build/test output.
+Loop: UNDERSTAND -> ACT -> INSPECT -> CLARIFY only at a decision trigger -> ADJUST -> ACT.
+CLARIFY triggers: product behavior, public/shared contract, architecture,
+security/privacy, migration, release/external state, money, destructive scope,
+priority, owner, deadline, or a source precedence this mission does not settle.
+
+The current approach is revisable unless listed as a constraint. If evidence
+challenges it and resolution needs another owner's scope or a decision, report
+DESIGN_CHANGE_REQUEST with premise, evidence, impact, bounded options, and requested
+disposition; do not apply an unowned change or bury it in a workaround.
 
 At completion reply with no transcript and at most 12 bullets:
 OUTCOME: <result>
@@ -101,10 +101,13 @@ and a verified report path. A verification worker renders and verifies the share
 ledger before Misa accepts the handoff; a pane transcript is never evidence.
 
 For code-changing work, the implementation handoff is never the acceptance record.
-Launch a separate read-only verifier after the writer settles. For visual-fidelity UI
-work, follow it with `visual-verifier` on the OMP `vision` route, with a reference image,
-exact viewport/state, and target screenshot artifact. Missing evidence is
-`BLOCKED`/`UNVERIFIED`, never a pass.
+Launch a separate read-only verifier after the writer settles; it must rerun the stated
+check and return observed output, failures, and unresolved claims. For visual-fidelity
+UI work, follow that verifier with a read-only `visual-verifier` on the OMP `vision`
+route. Its mission must contain a workspace-local reference image, exact viewport and
+state, and a required implementation screenshot artifact. It compares the two images
+with native vision and reports visible mismatches separately from uncertainty. A missing
+artifact or failed capture is `BLOCKED`/`UNVERIFIED`, never a pass.
 
 The constrained launch does not add autonomous approval flags. This explicit scope is
 still mandatory and is not a substitute for the user's authority. Misa must

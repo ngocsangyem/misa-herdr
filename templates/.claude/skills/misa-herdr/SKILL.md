@@ -17,10 +17,11 @@ panes start a neutral login `/bin/zsh` shell. Misa creates the pane, then starts
 in that available shell after selecting its role and model routing. Never start a
 second agent in an occupied pane.
 
-OMP may discover globally installed and project-local skills, depending on its local
-configuration. A worker should use the smallest available capability relevant to its
-task; require a named playbook only after confirming it exists in that runtime. Do not
-paste full skill bodies into worker prompts.
+OMP discovers the user's AgentKit skills from `~/.agents/skills` and project skills
+from `.agents/skills` by default. Keep that discovery enabled. A worker should let
+OMP match the smallest relevant skill from its task; require `/skill:<name>` in the
+mission only when Misa needs a particular playbook, such as `ak:plan` or `ak:cook`.
+Do not paste full skill bodies into worker prompts.
 
 ## Hard preflight
 
@@ -33,7 +34,7 @@ Before every Herdr control action, rely on `herdr_control`'s environment check.
   If a task requires one of those surfaces, state the limitation rather than bypassing
   the controller boundary.
 - Never run bare `herdr` for discovery because it attaches or launches the TUI. The
-  constrained tool provides agent roster and status actions; it deliberately provides
+  constrained tool provides agent roster, status, and safe Misa-owned cleanup actions; it deliberately provides
   no generic command surface, workspace mutation, or pane-run action.
 - Herdr JSON responses are authoritative. Capture all workspace, tab, pane, and
   agent IDs from them; never infer an ID from screen order.
@@ -86,16 +87,16 @@ a verification-worker handoff from `misa-grounded-evidence`.
 
 Before splitting a pane or starting an agent, Misa must choose the worker's
 **business role**, **OMP model role**, provider, and effective model independently
-in `model-routing.md`. The controller's own `fable` model is not a default for
+in `model-routing.md`. The controller's own Fable model is not a default for
 delegated workers. Record the selected values in the launch ledger and pass the
 effective model explicitly at launch. Business roles come from the project's live
 `.claude/agents/` definitions and are stated in the OMP mission prompt; they are not
 the same thing as OMP model roles.
 
-Use Fable for Misa's coordinator role and the advisor route only. Plan design uses
-Opus 5.5; well-scoped everyday implementation uses Sonnet 5.5. A simple scan, test,
-documentation change, or focused review uses its mapped specialist and selected model
-role.
+Use Fable for Misa's coordinator role and Opus 5.5 for well-scoped everyday work.
+Use a simple scan, test, documentation change, or focused review with its mapped
+specialist and selected model role; Misa's controller model does not expand that
+worker's authority.
 
 For an active worker wave, Misa must keep a roster and revisit `herdr agent list`
 after launches, after a bounded wait returns, and before starting a dependent worker.
@@ -108,9 +109,10 @@ follow up, or surface a decision. It is never an informational badge to ignore.
   ID, or a unique live agent name—not the UI-focused pane.
 - A user-specified provider, model, budget, latency target, or required agent surface
   always wins. Public model IDs do not guarantee account or provider availability.
-- `herdr_control` cannot close panes. Leave cleanup to the user or a separately
-  authorised operations worker; never close a user-owned pane/tab/workspace/session
-  or stop the Herdr server.
+- `herdr_control` can close only a Misa-owned pane from this controller session after
+  its matching worker is confirmed `idle` or `done`. It cannot close a user-owned,
+  working, blocked, unknown, or earlier-session pane, tab, workspace, or session; it
+  cannot stop the Herdr server.
 - `unknown` is not completion. `blocked` means a recognized approval or question UI;
   ask the user before answering it. `done` and `idle` are both ready for input, but
   server seen-state distinguishes them; reads do not mark a target seen.

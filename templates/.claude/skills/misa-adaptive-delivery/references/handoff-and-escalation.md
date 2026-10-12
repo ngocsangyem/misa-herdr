@@ -4,24 +4,24 @@ Use this reference after selecting the adaptive-delivery lane.
 
 ## Minimum worker mission
 
+Every mission states all four intake fields; write `none known` rather than omitting one.
+
 ```text
 Outcome: <requested result>
+Non-negotiable constraints: <user-accepted or contract-mandated constraints and source>
+Current approach (revisable): <the design or framing in use; revisable unless named above>
+Unknowns: <premises the worker must test, or "none known">
 Scope: <repository/worktree and allowed paths>
 Preserve: <observable behavior, contract, or explicit “unknown”>
 Verify: <focused command/check or how to discover it>
 
-For work with an architecture, lifecycle, shared contract, or vertical dependency,
-also state:
-Goal: <user outcome independent of an implementation choice>
-Non-negotiable constraints: <user-accepted or contract-mandated constraints and source>
-Current approach: <the design currently in use; revisable unless named above>
-Known unknowns: <premises the worker must test>
-
-Work iteratively: understand the relevant code and call sites, make only a small
-reversible change, inspect the result, then adjust. You may resolve ordinary local
-implementation choices inside Scope. Stop before changing product behavior, a
+Loop: UNDERSTAND -> ACT -> INSPECT -> CLARIFY only at a decision trigger -> ADJUST -> ACT.
+Understand the relevant code and call sites, make only a small reversible change,
+inspect the result, then adjust. You may resolve ordinary local implementation choices
+inside Scope. CLARIFY triggers (stop and report instead of acting): product behavior, a
 public/shared contract, architecture, security/privacy posture, migration, release or
-external state, money, destructive scope, priority, owner, or deadline.
+external state, money, destructive scope, priority, owner, deadline, or a source
+precedence conflict this mission does not settle.
 
 Treat a current approach as a hypothesis, not as a requirement, unless it is named as
 a non-negotiable constraint. If evidence shows that it does not meet the goal, do not
@@ -52,10 +52,12 @@ reason, permit a local adaptation, route a change to the owning scope and pause 
 affected dependents, or escalate the user-owned decision. A request that lacks a
 concrete premise and evidence is feedback, not a delivery gate.
 
-When the disposition changes future work or a dependency, record it before advancing
-the affected work in the task's owning report, plan, or work snapshot. The durable
-record names the decision, supporting evidence, responsible owner, affected dependents,
-and disposition; do not rely on the transient agent message.
+When a worker raises a question or `DESIGN_CHANGE_REQUEST`, record the disposition in
+the task report (or the owning plan or work snapshot) before routing `git-manager` or
+any dependent worker. The record names the decision, supporting evidence, responsible
+owner, and affected dependents; do not rely on the transient agent message. If the
+disposition touches a rule the user set in this session, ask the user before any
+external write such as a push or PR.
 
 ## Compact control record
 
