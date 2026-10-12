@@ -1,8 +1,10 @@
 # Monitoring and reporting
 
 Use this reference to receive agent results without flooding Misa's context. Herdr
-does not push a terminal completion into Misa's reasoning context, so Misa owns the
-roster check that turns a lifecycle transition into the next coordination action.
+does not independently push a terminal completion into Misa's reasoning context. A
+pending `agent_wait` can, however, return through its MCP call; Claude Code may
+background that call and later deliver its result as a task notification. Misa owns
+the roster check that turns either signal into the next coordination action.
 
 ## Roster and checkpoint loop
 
@@ -26,8 +28,10 @@ surface the question to the user; Misa cannot inspect or answer a raw approval U
 Keep `unknown` out of the completion path and recheck it at the next checkpoint.
 
 Herdr 0.9.3 treats `idle` and `done` as ready for input, with server seen-state
-distinguishing them. A CLI read does not mark a target seen, and client Done badges
-can differ. Treat a lost output stream or missing final close record as transport
+distinguishing them. Do not wait only for `done`: a completion can change to `idle`
+when seen, so the controller maps either ready-state request to both states. A CLI
+read does not mark a target seen, and client Done badges can differ. Treat a lost
+output stream or missing final close record as transport
 uncertainty: rerun `agent list` and `agent get` before deciding the worker failed or
 completed.
 

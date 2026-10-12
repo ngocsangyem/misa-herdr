@@ -13,6 +13,14 @@ assert.deepEqual(
   ['agent', 'read', 'worker-1', '--source', 'recent-unwrapped', '--lines', '60'],
 );
 assert.deepEqual(
+  buildHerdrCommand({ action: 'agent_wait', target: 'worker-1', until: 'done' }, workspace),
+  ['agent', 'wait', 'worker-1', '--until', 'idle', '--until', 'done'],
+);
+assert.deepEqual(
+  buildHerdrCommand({ action: 'agent_wait', target: 'worker-1', until: 'idle' }, workspace),
+  ['agent', 'wait', 'worker-1', '--until', 'idle', '--until', 'done'],
+);
+assert.deepEqual(
   buildHerdrCommand({ action: 'pane_split', cwd: workspace }, workspace),
   ['pane', 'split', '--current', '--direction', 'right', '--cwd', workspace, '--no-focus'],
 );

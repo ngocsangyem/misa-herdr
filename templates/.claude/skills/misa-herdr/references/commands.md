@@ -13,7 +13,7 @@ The tool itself enforces the Herdr-pane environment boundary.
 | One worker's lifecycle metadata | `agent_get` with `target` |
 | Compact final handoff only | `agent_handoff` with `target` |
 | Start OMP in an available worker shell | `agent_start` with `name`, `pane_id`, `model`, and `thinking`; Opus 5.5 also requires `escalation_basis` and `escalation_evidence` |
-| Wait for a settled worker | `agent_wait` with `target`, optional `until` and `timeout_ms` |
+| Wait for a settled worker | `agent_wait` with `target` and optional `timeout_ms`; use `until: blocked` only when that exact state is required |
 | Send a bounded worker mission or follow-up | `agent_prompt` with `target`, `message`, optional `wait` and `timeout_ms` |
 | Create an available worker shell | `pane_split` with `cwd`, optional `direction` |
 

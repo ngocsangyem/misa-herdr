@@ -10,6 +10,7 @@ const AGENT_NAME_PATTERN = /^[a-z][a-z0-9_-]{0,31}$/;
 const MODEL_PATTERN = /^[a-z0-9][a-z0-9._-]*\/[A-Za-z0-9._:-]{1,160}$/;
 const THINKING_TIERS = new Set(['low', 'medium', 'high', 'xhigh']);
 const WAIT_STATES = new Set(['idle', 'done', 'blocked']);
+const READY_STATES = new Set(['idle', 'done']);
 const CLAUDE_FIGMA_AGENTS = new Set(['design-analyst']);
 const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp']);
 
@@ -54,6 +55,17 @@ function optionalTimeout(args, value) {
   if (valueMs !== undefined) args.push('--timeout', String(valueMs));
 }
 
+function addWaitStates(args, until) {
+  if (until === undefined) return;
+  if (!WAIT_STATES.has(until)) throw new Error('until must be idle, done, or blocked.');
+  if (READY_STATES.has(until)) {
+    // Herdr uses `done` only until a completion is seen; either state is ready.
+    args.push('--until', 'idle', '--until', 'done');
+    return;
+  }
+  args.push('--until', 'blocked');
+}
+
 function referenceImagePath(value, workspace) {
   const resolved = workspacePath(value, workspace);
   if (!IMAGE_EXTENSIONS.has(path.extname(resolved).toLowerCase())) {
@@ -91,10 +103,7 @@ function buildHerdrCommand(input, workspace) {
     case 'agent_stop': return ['agent', 'send-keys', target(input.target), 'ctrl+c'];
     case 'agent_wait': {
       const args = ['agent', 'wait', target(input.target)];
-      if (input.until !== undefined) {
-        if (!WAIT_STATES.has(input.until)) throw new Error('until must be idle, done, or blocked.');
-        args.push('--until', input.until);
-      }
+      addWaitStates(args, input.until);
       optionalTimeout(args, input.timeout_ms);
       return args;
     }
